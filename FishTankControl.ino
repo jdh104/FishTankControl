@@ -56,14 +56,20 @@ void backLightLCD(boolean on){                 //Usage example: backLightLCD(fal
     Serial.write(18);                          //Turn LCD BackLight OFF
 }
 
-void outputLCD(int row, int col, int arg){     //Usage example: outputLCD(1,9,200);
+void outputLCD(int row, int col, int arg){     //Usage example: outputLCD(1,9,1337);
   int pos = (107 + (20 * row) + col);          //Calculate what number is needed to pass to Serial.write() in order to
   Serial.write(pos);                           //move to the row and column needed
-  Serial.print(arg);
+  Serial.print("" + arg);                      //Have to concatenate arg with empty string
 }
 
 void outputLCD(int row, int col, String arg){  //Usage example: outputLCD(2,11,"Hello!!");
   int pos = (107 + (20 * row) + col);          //Calculate what number is needed to pass to Serial.write() in order to
   Serial.write(pos);                           //move to the row and column needed
-  Serial.print(arg);
+  Serial.print("" + arg);                      //Have to concatenate arg with empty string
+}
+
+void outputLCD(int row, int col, float arg){   //Usage example: outputLCD(4,3,14.04);
+  int pos = (107 + (20 * row) + col);          //Calculate what number is needed to pass to Serial.write() in order to
+  Serial.write(pos);                           //move to the row and column needed
+  Serial.print("" + arg);                      //Have to concatenate arg with empty string
 }
