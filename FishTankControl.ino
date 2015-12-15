@@ -38,4 +38,5 @@ void output(int row, int col, String arg){
   int pos = (107 + (20 * row) + col);       //Calculate what number is needed to pass to Serial.write() in order to
   Serial.write(pos);                        //move to the row and column needed
   Serial.print(arg);
-}
+}       ///////DUMMMBB
+
