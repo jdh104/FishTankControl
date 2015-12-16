@@ -9,7 +9,7 @@ const byte                          //These constants should only be changed if 
            
 const byte                          //These constants are used to make code more readable and should NEVER be changed
            CLOSE=0,CLOSED=0,        //Used in solenoid()
-           OPEN=1;                  //Used in solenoid()
+           OPEN=1,                  //Used in solenoid()
            TOOSALTY=0,              //Assigned to cStatus if output of readConductivity() is too high
            TOOFRESH=1,              //Assigned to cStatus if output of readConductivity() is too low
            JUSTRIGHT=2;             //Assigned to cStatus if output of readConductivity() is within acceptable range
