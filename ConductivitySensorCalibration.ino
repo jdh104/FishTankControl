@@ -7,7 +7,7 @@ void setup() {
   Serial.write(152);                            //move cursor to (1,4)
   Serial.write("CALIBRATION");                  //start string at (1,4)
   Serial.write(189);                            //move cursor to (3,1)
-  Serial.write("analog input = ");                //start string at (3,1);
+  Serial.write("analog input = ");              //start string at (3,1);
   Serial.write(22);                             //turn cursor off to keep screen clean
 }
 
