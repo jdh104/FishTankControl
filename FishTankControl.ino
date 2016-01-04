@@ -86,8 +86,14 @@ void outputLCD(int row, int col, String arg){  // Usage example: outputLCD(2,11,
   Serial.print(arg);                           // Serial.print() must be used for variables
 }
 
+void outputLCD(int row, int col, float arg, int prec){
+                                               // Usage example: outputLCD(3,2,3.1415,4);
+  int pos = (107 + (20 * row) + col);          // Calculate what number is needed to pass to Serial.write() in order to
+  Serial.write(pos);                           // move to the row and column needed
+  Serial.print(arg,prec);                      // Serial.print() must be used for variables
+}
 float toVolts(int reading){                    // Usage example: float volts = toVolts(readConductivity());
-  return ((( (float) reading) / 1023) * 5);    // Derived from ratio: (reading/1023) = (volts/5V)
+  return ((( float(reading)) / 1023.0) * 5.0); // Derived from ratio: (reading/1023) = (volts/5V)
 }
 
 void solenoid(byte action, byte sol){          // Usage example: solenoid(OPEN,SALTYSOLENOID);
