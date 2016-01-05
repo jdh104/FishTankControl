@@ -100,11 +100,11 @@ float toVolts(int reading){                    // Usage example: float volts = t
   return ((( float(reading)) / 1023.0) * 5.0); // Derived from ratio: (reading/1023) = (volts/5V)
 }
 
-void solenoid(byte action, byte sol){          // Usage example: solenoid(OPEN,SALTYSOLENOID);
+void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,SALTYSOLENOID);
   if (action==CLOSE){
-    /*INSERT CODE TO CLOSE SOLENOID ON PIN sol*/
+    /*INSERT CODE TO CLOSE SOLENOID ON PIN relay*/
   } else {
-    /*INSERT CODE TO OPEN SOLENOID ON PIN sol*/
+    /*INSERT CODE TO OPEN SOLENOID ON PIN relay*/
   }
 }
 
