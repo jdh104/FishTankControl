@@ -1,10 +1,10 @@
-
+  /*indent size*/
 const byte                          //These constants should only be changed if the circuit is changed
            CSENSORPOWER=2,          //Digital Pin that provides power to Conductivity Sensor (CS)
            CSENSORINPUT=0,          //Analog Pin that is used to read in a value from the CS
            TXPIN=1,                 //Digital Pin that is used to transmit data via "Serial"
-           FRESHSOLENOID=3,         //Digital Pin that is used to add fresh water (FW) to the reservoir
-           SALTYSOLENOID=4,         //Digital Pin that is used to add salty water (SW) to the reservoir
+           FRESHRELAY=3,            //Digital Pin that is used to energize fresh water relay (FWR)
+           SALTYRELAY=4,            //Digital Pin that is used to energize salty water relay (SWR)
            HEATER=5;                //Digital Pin that provides power to the heater
            
 const byte                          //These constants are used to make code more readable and should NEVER be changed
@@ -23,6 +23,9 @@ void setup(){
   Serial.begin(9600);                          // Set baud rate of LCD to 9600 bps
   pinMode(TXPIN,OUTPUT);                       // Set Transmit pin to output mode
   pinMode(CSENSORPOWER,OUTPUT);                // Set pin that powers conductivity sensor to output mode
+  pinMode(FRESHRELAY,OUTPUT);                  // Set pin used to energize FWR to output mode
+  pinMode(SALTYRELAY,OUTPUT);                  // Set pin used to energize SWR to output mode
+  pinMode(HEATER,OUTPUT);                      // Set pin used to power heater to output mode
   formatLCD(true,false,false);                 // Turn display on, cursor off, character blink off
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
@@ -92,6 +95,7 @@ void outputLCD(int row, int col, float arg, int prec){
   Serial.write(pos);                           // move to the row and column needed
   Serial.print(arg,prec);                      // Serial.print() must be used for variables
 }
+
 float toVolts(int reading){                    // Usage example: float volts = toVolts(readConductivity());
   return ((( float(reading)) / 1023.0) * 5.0); // Derived from ratio: (reading/1023) = (volts/5V)
 }
