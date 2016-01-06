@@ -3,8 +3,8 @@ const byte                          //These constants should only be changed if 
            CSENSORPOWER=2,          //Digital Pin that provides power to Conductivity Sensor (CS)
            CSENSORINPUT=0,          //Analog Pin that is used to read in a value from the CS
            TXPIN=1,                 //Digital Pin that is used to transmit data via "Serial"
-           FRESHRELAY=3,            //Digital Pin that is used to energize fresh water relay (FWR)
-           SALTYRELAY=4,            //Digital Pin that is used to energize salty water relay (SWR)
+           FRESHRELAY=4,            //Digital Pin that is used to energize fresh water relay (FWR)
+           SALTYRELAY=3,            //Digital Pin that is used to energize salty water relay (SWR)
            HEATER=5;                //Digital Pin that provides power to the heater
            
 const byte                          //These constants are used to make code more readable and should NEVER be changed
@@ -15,8 +15,8 @@ const byte                          //These constants are used to make code more
            JUSTRIGHT=2;             //Assigned to cStatus if output of readConductivity() is within acceptable range
 
 byte                                //These variables are used throughout the program to store data
-     swsStatus,                     //Status of Salt-Water-Solenoid
-     fwsStatus,                     //Status of Fresh-Water-Solenoid
+     swsStatus=CLOSED,              //Status of Salt-Water-Solenoid
+     fwsStatus=CLOSED,              //Status of Fresh-Water-Solenoid
      cStatus;                       //Status of Conductivity of water
 
 void setup(){
@@ -30,8 +30,6 @@ void setup(){
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
   update();                                    // Update values of variables to accurately reflect what they represent
-  solenoid(CLOSE,FRESHRELAY);               // Close the Freshwater solenoid (in case it's open)
-  solenoid(CLOSE,SALTYRELAY );               // Close the Saltwater solenoid (in case it's open)
 }
 
 void loop(){
@@ -43,7 +41,7 @@ int readConductivity(){                        // Usage example: int saltLevel =
   delay(100);                                  // 
   int level = analogRead(CSENSORINPUT);        // 
   digitalWrite(CSENSORPOWER, LOW);             // Turn off power ASAP to prevent corrosion
-  return level;
+  return level;                                //
 }
 
 void formatLCD(boolean display, boolean cursor, boolean blink){
@@ -101,22 +99,22 @@ float toVolts(int reading){                    // Usage example: float volts = t
 }
 
 void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,SALTYRELAY);
-  if (action==CLOSE){
-    digitalWrite(relay,LOW);
-    if (relay==FRESHRELAY){
-      fwsStatus=CLOSED;
-    } else {
-      swsStatus=CLOSED;
-    }
-  } else { 
-    digitalWrite(relay,HIGH);
-    if(relay==FRESHRELAY){
-      fwsStatus=OPEN;
-    } else{
-      swsStatus=OPEN;
-    }
-  }
-}
+  if (action==CLOSE){                          // 
+    digitalWrite(relay,LOW);                   // 
+    if (relay==FRESHRELAY){                    // 
+      fwsStatus=CLOSED;                        // 
+    } else {                                   // 
+      swsStatus=CLOSED;                        // 
+    }                                          // 
+  } else {                                     // 
+    digitalWrite(relay,HIGH);                  // 
+    if (relay==FRESHRELAY){                    // 
+      fwsStatus=OPEN;                          // 
+    } else {                                   // 
+      swsStatus=OPEN;                          // 
+    }                                          // 
+  }                                            // 
+}                                              // 
 
 void update(){                                 // Usage example: update();
   /*INSERT CODE TO CHECK STATUS
