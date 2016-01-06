@@ -30,8 +30,8 @@ void setup(){
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
   update();                                    // Update values of variables to accurately reflect what they represent
-  solenoid(CLOSE,FRESHSOLENOID);               // Close the Freshwater solenoid (in case it's open)
-  solenoid(CLOSE,SALTYSOLENOID);               // Close the Saltwater solenoid (in case it's open)
+  solenoid(CLOSE,FRESHRELAY);               // Close the Freshwater solenoid (in case it's open)
+  solenoid(CLOSE,SALTYRELAY );               // Close the Saltwater solenoid (in case it's open)
 }
 
 void loop(){
@@ -102,9 +102,19 @@ float toVolts(int reading){                    // Usage example: float volts = t
 
 void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,SALTYRELAY);
   if (action==CLOSE){
-    /*INSERT CODE TO CLOSE SOLENOID ON PIN relay*/
-  } else {
-    /*INSERT CODE TO OPEN SOLENOID ON PIN relay*/
+    digitalWrite(relay,LOW);
+    if (relay==FRESHRELAY){
+      fwsStatus=CLOSED;
+    } else {
+      swsStatus=CLOSED;
+    }
+  } else { 
+    digitalWrite(relay,HIGH);
+    if(relay==FRESHRELAY){
+      fwsStatus=OPEN;
+    } else{
+      swsStatus=OPEN;
+    }
   }
 }
 
