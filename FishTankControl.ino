@@ -15,9 +15,17 @@ const byte                          //These constants are used to make code more
            JUSTRIGHT=2;             //Assigned to cStatus if output of readConductivity() is within acceptable range
 
 byte                                //These variables are used throughout the program to store data
-     swsStatus=CLOSED,              //Status of Salt-Water-Solenoid
-     fwsStatus=CLOSED,              //Status of Fresh-Water-Solenoid
-     cStatus;                       //Status of Conductivity of water
+           swsStatus=CLOSED,        //Status of Salt-Water-Solenoid
+           fwsStatus=CLOSED,        //Status of Fresh-Water-Solenoid
+           csStatus,                //Status of Conductivity of water
+           csOutput;                //Output of Conductivity Sensor
+     
+boolean                             //These variables are used to schedule tasks to be run side-by-side
+           readCS=false;            //Used when reading conductivity sensor
+           
+unsigned long                       //These variables are used to schedule tasks to be run side-by-side
+           PRESENT=0,               //This variable represents the current time on the system clock
+           conductivitySchedule;    //Represents the time scheduled to read the CS
 
 void setup(){
   Serial.begin(9600);                          // Set baud rate of LCD to 9600 bps
@@ -33,15 +41,28 @@ void setup(){
 }
 
 void loop(){
-
+  
+  PRESENT = millis();                                           // Update current time
+  
+  /***********************************************BEGIN EVENTS*********************************************************/
+  
+  if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity is scheduled for now
+    csOutput = analogRead(CSENSORINPUT);                        // Read the conductivity sensor
+    digitalWrite(CSENSORPOWER,LOW);                             // Turn off power to conductivity sensor
+    readCS=false;                                               // Un-Schedule this event
+  }
+  
+  /************************************************END EVENTS*********************************************************/
+  
+  
 }
 
-int readConductivity(){                        // Usage example: int saltLevel = readConductivity();
-  digitalWrite(CSENSORPOWER,HIGH);             // 
-  delay(100);                                  // 
-  int level = analogRead(CSENSORINPUT);        // 
-  digitalWrite(CSENSORPOWER, LOW);             // Turn off power ASAP to prevent corrosion
-  return level;                                //
+void readConductivity(){                       // Usage example: int saltLevel = readConductivity();
+  if (!readCS){                                // If this event is not already scheduled
+    digitalWrite(CSENSORPOWER,HIGH);           // Turn on power to conductivity sensor
+    readCS = true;                             // Schedule event to read sensor
+    conductivitySchedule = millis()+100;       // Schedule event for 100 milliseconds from now
+  }
 }
 
 void formatLCD(boolean display, boolean cursor, boolean blink){
