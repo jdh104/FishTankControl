@@ -11,21 +11,27 @@ const byte                          //These constants are used to make code more
            CLOSE=LOW,CLOSED=LOW,    //Used in solenoid()
            OPEN=HIGH,               //Used in solenoid()
            ON=HIGH, OFF=LOW,        //Used by htrStatus
-           TOOSALTY=0, SALTY=0,     //Assigned to cStatus if output of readConductivity() is too high
-           TOOFRESH=1, FRESH=1,     //Assigned to cStatus if output of readConductivity() is too low
-           JUSTRIGHT=2;             //Assigned to cStatus if output of readConductivity() is within acceptable range
+           SALTY=0,                 //Used by addWater() ex: addWater(SALTY,2000);
+           FRESH=1;                 //Used by addWater() ex: addWater(FRESH,2000)
 
-int                                 //These variables are used throughout the program to store data
-           swsStatus=CLOSED,        //Status of Salt-Water-Solenoid
-           fwsStatus=CLOSED,        //Status of Fresh-Water-Solenoid
-           htrStatus=OFF,           //Status of Heater
-           csOutput,                //Output of Conductivity Sensor
-           thOutput,                //Output of Thermister
-           displaySet=1;            //Symbolizes which set of data to print to LCD screen
-float
-           sStatus,                 //Status of Salinity of water
-           tStatus;                 //Status of temperature of water
-     
+const float                         //These constants represent desired salt levels
+           SETPOINT=0               //Desired salinity level
+           STDEV=0                  //Standard deviation of salinity data
+           UCL=0                    //Upper acceptable limit
+           LCL=0                    //Lower acceptable limit
+
+int                                 /*These variables are used throughout the program to store data*********/
+           swsStatus=CLOSED,        //Status of Salt-Water-Solenoid                                       **/
+           fwsStatus=CLOSED,        //Status of Fresh-Water-Solenoid                                      **/
+           htrStatus=OFF,           //Status of Heater                                                    **/
+           csOutput=0,              //Output of Conductivity Sensor                                       **/
+           thOutput=0,              //Output of Thermister                                                **/
+           displaySet=1;            //Symbolizes which set of data to print to LCD screen                 **/
+float                                                                                                    /**/
+           sStatus,                 //Status of Salinity of water                                         **/
+           tStatus;                 //Status of temperature of water                                      **/
+                                    /***********************************************************************/
+                                    
 bool                                //These variables are used to schedule tasks to be run side-by-side
            readCS=false,            //Used when reading conductivity sensor
            closeSWS=false,          //Used after opening saltwater solenoid
