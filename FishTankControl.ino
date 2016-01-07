@@ -35,19 +35,21 @@ float                               /*                                          
                                     /***********************************************************************/
 
 const unsigned long                 //These constants used to define times and intervals
-          DST=5000;                 //Represents the time between each display set switch
+          DST=5000,                 //Represents the time between each display set switch (ms)
+          LCD=500;                  //Represents the time between each update of LCD Screen (ms)
 
 bool                                //These variables are used to schedule tasks to be run side-by-side
-          readCS=false,             //Used when reading conductivity sensor
-          closeSWS=false,           //Used after opening saltwater solenoid
-          closeFWS=false;           //Used after opening freshwater solenoid
+          readCS=false,             //Used when reading conductivity sensor  -> conductivitySchedule
+          closeSWS=false,           //Used after opening saltwater solenoid  -> swsSchedule
+          closeFWS=false;           //Used after opening freshwater solenoid -> fwsSchedule
            
 unsigned long                       //These variables are used to schedule tasks to be run side-by-side
           PRESENT=0,                //This variable represents the current time on the system clock
           conductivitySchedule,     //Represents the time scheduled to read the CS
           swsSchedule,              //Represents the time scheduled to close saltwater solenoid
           fwsSchedule,              //Represents the time scheduled to close freshwater solenoid
-          displaySwitchSchedule=DST;//Represents the time scheduled to switch display set
+          displaySwitchSchedule=DST,//Represents the time scheduled to switch display set
+          lcdUpdateSchedule=0;      //Represents the time scheduled to update LCD Screen
 
 void setup(){
   Serial.begin(9600);                          // Set baud rate of LCD to 9600 bps
@@ -65,7 +67,6 @@ void loop(){
   
   PRESENT = millis();                                           // Update current time
   events();                                                     // Do scheduled events
-  updateLCD();                                                  // Update LCD Screen
   
 }
 
@@ -91,6 +92,10 @@ void events(){                                                  // Usage example
     }                                                           // 
     displaySwitchSchedule += DST;                               // Re-schedule event
     clearLCD();                                                 // Clear the LCD screen
+  }
+  if (PRESENT>lcdUpdateSchedule){                               // If updateLCD() is scheduled for now
+    updateLCD();                                                // Update the LCD Screen
+    lcdUpdateSchedule += LCD;                                   // Re-Schedule this event
   }
 }
 
