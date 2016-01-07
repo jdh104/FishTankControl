@@ -20,7 +20,7 @@ int                                 //These variables are used throughout the pr
            csStatus,                //Status of Conductivity of water
            csOutput;                //Output of Conductivity Sensor
      
-boolean                             //These variables are used to schedule tasks to be run side-by-side
+bool                                //These variables are used to schedule tasks to be run side-by-side
            readCS=false,            //Used when reading conductivity sensor
            closeSWS=false,          //Used after opening saltwater solenoid
            closeFWS=false;          //Used after opening freshwater solenoid
@@ -81,7 +81,7 @@ void readConductivity(){                       // Usage example: int saltLevel =
   }
 }
 
-void formatLCD(boolean display, boolean cursor, boolean blink){
+void formatLCD(bool display, bool cursor, bool blink){
   if (display){                                // Usage example: formatLCD(true,false,true);
     if (cursor){                               // 
       if (blink){                              // 
@@ -105,7 +105,7 @@ void clearLCD(){                               // Clear LCD Screen and move curs
   Serial.write(12);                            // top-left position (row 1, column 1)
 }
 
-void backLightLCD(boolean on){                 // Usage example: backLightLCD(false);
+void backLightLCD(bool on){                    // Usage example: backLightLCD(false);
   if (on)                                      // 
     Serial.write(17);                          // Turn LCD BackLight ON
   else                                         // 
