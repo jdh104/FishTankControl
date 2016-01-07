@@ -17,7 +17,7 @@ const byte                          //These constants are used to make code more
 int                                 //These variables are used throughout the program to store data
            swsStatus=CLOSED,        //Status of Salt-Water-Solenoid
            fwsStatus=CLOSED,        //Status of Fresh-Water-Solenoid
-           csStatus,                //Status of Conductivity of water
+           sStatus,                 //Status of Salinity of water
            csOutput;                //Output of Conductivity Sensor
      
 bool                                //These variables are used to schedule tasks to be run side-by-side
@@ -46,11 +46,12 @@ void setup(){
 void loop(){
   
   PRESENT = millis();                                           // Update current time
+  events();                                                     // Do scheduled events
+  updateLCD();                                                  // Update LCD Screen
   
-  /********************************************************************************************************************/
-  /***********************************************BEGIN EVENTS*********************************************************/
-  /**********************************************              ********************************************************/
-  
+}
+
+void events(){
   if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity() is scheduled for now
     csOutput = analogRead(CSENSORINPUT);                        // Read the conductivity sensor
     digitalWrite(CSENSORPOWER,LOW);                             // Turn off power to conductivity sensor
@@ -64,13 +65,6 @@ void loop(){
     solenoid(CLOSE,SALTY);                                      // Close the SWS
     closeSWS=false;                                             // Un-Schedule this event
   }
-  
-  /***********************************************            ********************************************************/
-  /************************************************END EVENTS*********************************************************/
-  /*******************************************************************************************************************/
-  
-  updateLCD();
-  
 }
 
 void readConductivity(){                       // Usage example: int saltLevel = readConductivity();
@@ -136,6 +130,12 @@ void updateLCD(){
    * INSERT CODE TO DISPLAY ORGANIZED INFO 
    * ABOUT FISHTANK ON LCD SCREEN
    */
+   outputLCD(1,2,"csReading=");                // 
+   outputLCD(1,12,csOutput);                   // 
+   outputLCD(1,17,"Salt=");                    // 
+   outputLCD(1,22,sStatus,4);                  // 
+   outputLCD(1,28,"%");                        // 
+   
 }
 
 float toVolts(int reading){                    // Usage example: float volts = toVolts(readConductivity());
