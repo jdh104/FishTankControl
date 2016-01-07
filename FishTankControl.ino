@@ -18,7 +18,7 @@ const byte                          //These constants are used to make code more
 int                                 //These variables are used throughout the program to store data
            swsStatus=CLOSED,        //Status of Salt-Water-Solenoid
            fwsStatus=CLOSED,        //Status of Fresh-Water-Solenoid
-           htrStauts=OFF,           //Status of Heater
+           htrStatus=OFF,           //Status of Heater
            csOutput,                //Output of Conductivity Sensor
            thOutput;                //Output of Thermister
 float
