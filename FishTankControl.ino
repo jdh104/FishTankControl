@@ -8,8 +8,8 @@ const byte                          //These constants should only be changed if 
            HEATER=5;                //Digital Pin that provides power to the heater
            
 const byte                          //These constants are used to make code more readable and should NEVER be changed
-           CLOSE=0,CLOSED=0,        //Used in solenoid()
-           OPEN=1,                  //Used in solenoid()
+           CLOSE=LOW,CLOSED=LOW,    //Used in solenoid()
+           OPEN=HIGH,               //Used in solenoid()
            TOOSALTY=0, SALTY=0,     //Assigned to cStatus if output of readConductivity() is too high
            TOOFRESH=1, FRESH=1,     //Assigned to cStatus if output of readConductivity() is too low
            JUSTRIGHT=2;             //Assigned to cStatus if output of readConductivity() is within acceptable range
@@ -21,8 +21,8 @@ byte                                //These variables are used throughout the pr
            csOutput;                //Output of Conductivity Sensor
      
 boolean                             //These variables are used to schedule tasks to be run side-by-side
-           readCS=false;            //Used when reading conductivity sensor
-           closeSWS=false;          //Used after opening saltwater solenoid
+           readCS=false,            //Used when reading conductivity sensor
+           closeSWS=false,          //Used after opening saltwater solenoid
            closeFWS=false;          //Used after opening freshwater solenoid
            
 unsigned long                       //These variables are used to schedule tasks to be run side-by-side
@@ -41,7 +41,6 @@ void setup(){
   formatLCD(true,false,false);                 // Turn display on, cursor off, character blink off
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
-  update();                                    // Update values of variables to accurately reflect what they represent
 }
 
 void loop(){
@@ -50,10 +49,18 @@ void loop(){
   
   /***********************************************BEGIN EVENTS*********************************************************/
   
-  if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity is scheduled for now
+  if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity() is scheduled for now
     csOutput = analogRead(CSENSORINPUT);                        // Read the conductivity sensor
     digitalWrite(CSENSORPOWER,LOW);                             // Turn off power to conductivity sensor
     readCS=false;                                               // Un-Schedule this event
+  }
+  if (closeFWS && PRESENT>fwsSchedule){                         // If closeFreshSolenoid() is scheduled for now
+    solenoid(CLOSE,FRESH);                                      // Close the FWS
+    closeFWS=false;                                             // Un-Schedule this event
+  }
+  if (closeSWS && PRESENT>swsSchedule){                         // If closeSaltySolenoid() is scheduled for now
+    solenoid(CLOSE,SALTY);                                      // Close the SWS
+    closeSWS=false;                                             // Un-Schedule this event
   }
   
   /************************************************END EVENTS*********************************************************/
@@ -123,21 +130,12 @@ float toVolts(int reading){                    // Usage example: float volts = t
   return ((( float(reading)) / 1023.0) * 5.0); // Derived from ratio: (reading/1023) = (volts/5V)
 }
 
-void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,SALTYRELAY);
-  if (action==CLOSE){                          // 
-    digitalWrite(relay,LOW);                   // 
-    if (relay==FRESHRELAY){                    // 
-      fwsStatus=CLOSED;                        // 
-    } else {                                   // 
-      swsStatus=CLOSED;                        // 
-    }                                          // 
+void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,SALTYRELAY)
+  digitalWrite(relay,action);                  // Set the appropriate pin to the appropriate status
+  if (relay==FRESHRELAY){                      // If operating on the freshwater solenoid
+    fwsStatus=action;                          // Update the FWS status variable
   } else {                                     // 
-    digitalWrite(relay,HIGH);                  // 
-    if (relay==FRESHRELAY){                    // 
-      fwsStatus=OPEN;                          // 
-    } else {                                   // 
-      swsStatus=OPEN;                          // 
-    }                                          // 
+    swsStatus=action;                          // Update the SWS status variable
   }                                            // 
 }                                              // 
 
