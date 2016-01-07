@@ -10,8 +10,8 @@ const byte                          //These constants should only be changed if 
 const byte                          //These constants are used to make code more readable and should NEVER be changed
            CLOSE=0,CLOSED=0,        //Used in solenoid()
            OPEN=1,                  //Used in solenoid()
-           TOOSALTY=0,              //Assigned to cStatus if output of readConductivity() is too high
-           TOOFRESH=1,              //Assigned to cStatus if output of readConductivity() is too low
+           TOOSALTY=0, SALTY=0,     //Assigned to cStatus if output of readConductivity() is too high
+           TOOFRESH=1, FRESH=1,     //Assigned to cStatus if output of readConductivity() is too low
            JUSTRIGHT=2;             //Assigned to cStatus if output of readConductivity() is within acceptable range
 
 byte                                //These variables are used throughout the program to store data
@@ -22,10 +22,14 @@ byte                                //These variables are used throughout the pr
      
 boolean                             //These variables are used to schedule tasks to be run side-by-side
            readCS=false;            //Used when reading conductivity sensor
+           closeSWS=false;          //Used after opening saltwater solenoid
+           closeFWS=false;          //Used after opening freshwater solenoid
            
 unsigned long                       //These variables are used to schedule tasks to be run side-by-side
            PRESENT=0,               //This variable represents the current time on the system clock
-           conductivitySchedule;    //Represents the time scheduled to read the CS
+           conductivitySchedule,    //Represents the time scheduled to read the CS
+           swsSchedule,             //Represents the time scheduled to close saltwater solenoid
+           fwsSchedule;             //Represents the time scheduled to close freshwater solenoid
 
 void setup(){
   Serial.begin(9600);                          // Set baud rate of LCD to 9600 bps
@@ -137,9 +141,14 @@ void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,S
   }                                            // 
 }                                              // 
 
-void update(){                                 // Usage example: update();
-  /*INSERT CODE TO CHECK STATUS
-   *OF THINGS AND REASSIGN
-   *VARIABLES TO BE ACCURATE
-   */
-}
+void addWater(byte type, unsigned long ms){    // Usage example: addWater(SALTY,2000)
+  if (type==FRESH){                            // 
+    solenoid(OPEN,FRESHRELAY);                 // Open freshwater solenoid
+    closeFWS=true;                             // Schedule a task to close freshwater solenoid
+    fwsSchedule = (millis()+ms);               // Schedule ^ for (ms) milliseconds later
+  } else {                                     // 
+    solenoid(OPEN,SALTYRELAY);                 // Open saltwater solenoid
+    closeSWS=true;                             // Schedule a task to close saltwater solenoid
+    swsSchedule = (millis()+ms);               // Schedule ^ for (ms) milliseconds later
+  }                                            // 
+}                                              // 
