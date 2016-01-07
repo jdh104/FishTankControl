@@ -15,21 +15,23 @@ const byte                          //These constants are used to make code more
            FRESH=1;                 //Used by addWater() ex: addWater(FRESH,2000)
 
 const float                         //These constants represent desired salt levels
-           SETPOINT=0               //Desired salinity level
-           STDEV=0                  //Standard deviation of salinity data
-           UCL=0                    //Upper acceptable limit
-           LCL=0                    //Lower acceptable limit
+           SETPOINT=0,              //Desired salinity level
+           STDEV=0,                 //Standard deviation of salinity data
+           UCL=0,                   //Upper acceptable limit of desired salinity level
+           LCL=0;                   //Lower acceptable limit of desired salinity level
 
-int                                 /*These variables are used throughout the program to store data*********/
-           swsStatus=CLOSED,        //Status of Salt-Water-Solenoid                                       **/
-           fwsStatus=CLOSED,        //Status of Fresh-Water-Solenoid                                      **/
-           htrStatus=OFF,           //Status of Heater                                                    **/
-           csOutput=0,              //Output of Conductivity Sensor                                       **/
-           thOutput=0,              //Output of Thermister                                                **/
-           displaySet=1;            //Symbolizes which set of data to print to LCD screen                 **/
-float                                                                                                    /**/
-           sStatus,                 //Status of Salinity of water                                         **/
-           tStatus;                 //Status of temperature of water                                      **/
+                                    /***********************************************************************/
+byte                                /*These variables are used throughout the program to store data       **/
+           swsStatus=CLOSED,        /*Status of Salt-Water-Solenoid                                       **/
+           fwsStatus=CLOSED,        /*Status of Fresh-Water-Solenoid                                      **/
+           htrStatus=OFF;           /*Status of Heater                                                    **/
+int                                 /*                                                                    **/
+           csOutput=0,              /*Output of Conductivity Sensor                                       **/
+           thOutput=0,              /*Output of Thermister                                                **/
+           displaySet=1;            /*Symbolizes which set of data to print to LCD screen                 **/
+float                               /*                                                                    **/
+           sStatus,                 /*Status of Salinity of water (wt%)                                   **/
+           tStatus;                 /*Status of Temperature of water (Degrees)                            **/
                                     /***********************************************************************/
                                     
 bool                                //These variables are used to schedule tasks to be run side-by-side
@@ -61,9 +63,10 @@ void loop(){
   PRESENT = millis();                                           // Update current time
   events();                                                     // Do scheduled events
   updateLCD();                                                  // Update LCD Screen
+  
 }
 
-void events(){
+void events(){                                                  // Usage example: events();
   if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity() is scheduled for now
     csOutput = analogRead(CSENSORINPUT);                        // Read the conductivity sensor
     digitalWrite(CSENSORPOWER,LOW);                             // Turn off power to conductivity sensor
@@ -77,14 +80,14 @@ void events(){
     solenoid(CLOSE,SALTY);                                      // Close the SWS
     closeSWS=false;                                             // Un-Schedule this event
   }
-  if (PRESENT>displaySwitchTime){
-    if (displaySet==1){
-      displaySet=2;
-    } else {
-      displaySet=1;
-    }
-    displaySwitchTime = PRESENT + 5000;
-    clearLCD();
+  if (PRESENT>displaySwitchTime){                               // If 5 seconds have passed
+    if (displaySet==1){                                         // vvvvvvvvvvvvvvvvvvvvvvvv
+      displaySet=2;                                             // Switch display set
+    } else {                                                    // ^^^^^^^^^^^^^^^^^^^^^^^^
+      displaySet=1;                                             // ^^^^^^^^^^^^^^^^^^^^^^^^
+    }                                                           // 
+    displaySwitchTime = PRESENT + 5000;                         // Re-schedule event for 5 seconds from now
+    clearLCD();                                                 // Clear the LCD screen
   }
 }
 
