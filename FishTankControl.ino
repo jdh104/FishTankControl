@@ -85,7 +85,7 @@ void formatLCD(boolean display, boolean cursor, boolean blink){
         Serial.write(24); //<------------------//-(true,true,false): Display & Cursor ON, blink OFF
       }                                        // 
     } else {                                   // 
-      if (blink) {                             // 
+      if (blink){                              // 
         Serial.write(23); //<------------------//-(true,false,true): Display ON, Cursor OFF, blink ON
       } else {                                 // 
         Serial.write(22); //<------------------//-(true,false,false): Display ON, Cursor & blink OFF
