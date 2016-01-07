@@ -152,11 +152,12 @@ void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,S
 }                                              // 
 
 void addWater(byte type, unsigned long ms){    // Usage example: addWater(SALTY,2000)
-  if (type==FRESH){                            // 
+  if (type==FRESH && !closeFWS){               // Only pass this if closeFWS is not already scheduled
     solenoid(OPEN,FRESHRELAY);                 // Open freshwater solenoid
     closeFWS=true;                             // Schedule a task to close freshwater solenoid
     fwsSchedule = (millis()+ms);               // Schedule ^ for (ms) milliseconds later
-  } else {                                     // 
+  }                                            // 
+  if (type==SALTY && !closeSWS){               // Only pass this if closeSWS is not already scheduled
     solenoid(OPEN,SALTYRELAY);                 // Open saltwater solenoid
     closeSWS=true;                             // Schedule a task to close saltwater solenoid
     swsSchedule = (millis()+ms);               // Schedule ^ for (ms) milliseconds later
