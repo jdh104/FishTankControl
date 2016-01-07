@@ -47,7 +47,9 @@ void loop(){
   
   PRESENT = millis();                                           // Update current time
   
+  /********************************************************************************************************************/
   /***********************************************BEGIN EVENTS*********************************************************/
+  /**********************************************              ********************************************************/
   
   if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity() is scheduled for now
     csOutput = analogRead(CSENSORINPUT);                        // Read the conductivity sensor
@@ -63,8 +65,11 @@ void loop(){
     closeSWS=false;                                             // Un-Schedule this event
   }
   
+  /***********************************************            ********************************************************/
   /************************************************END EVENTS*********************************************************/
+  /*******************************************************************************************************************/
   
+  updateLCD();
   
 }
 
@@ -124,6 +129,13 @@ void outputLCD(int row, int col, float arg, int prec){
   int pos = (107 + (20 * row) + col);          // Calculate what number is needed to pass to Serial.write() in order to
   Serial.write(pos);                           // move to the row and column needed
   Serial.print(arg,prec);                      // Serial.print() must be used for variables
+}
+
+void updateLCD(){
+  /**
+   * INSERT CODE TO DISPLAY ORGANIZED INFO 
+   * ABOUT FISHTANK ON LCD SCREEN
+   */
 }
 
 float toVolts(int reading){                    // Usage example: float volts = toVolts(readConductivity());
