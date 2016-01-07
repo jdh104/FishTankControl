@@ -10,6 +10,7 @@ const byte                          //These constants should only be changed if 
 const byte                          //These constants are used to make code more readable and should NEVER be changed
            CLOSE=LOW,CLOSED=LOW,    //Used in solenoid()
            OPEN=HIGH,               //Used in solenoid()
+           ON=HIGH, OFF=LOW,        //Used by htrStatus
            TOOSALTY=0, SALTY=0,     //Assigned to cStatus if output of readConductivity() is too high
            TOOFRESH=1, FRESH=1,     //Assigned to cStatus if output of readConductivity() is too low
            JUSTRIGHT=2;             //Assigned to cStatus if output of readConductivity() is within acceptable range
@@ -17,8 +18,12 @@ const byte                          //These constants are used to make code more
 int                                 //These variables are used throughout the program to store data
            swsStatus=CLOSED,        //Status of Salt-Water-Solenoid
            fwsStatus=CLOSED,        //Status of Fresh-Water-Solenoid
+           htrStauts=OFF,           //Status of Heater
+           csOutput,                //Output of Conductivity Sensor
+           thOutput;                //Output of Thermister
+float
            sStatus,                 //Status of Salinity of water
-           csOutput;                //Output of Conductivity Sensor
+           tStatus;                 //Status of temperature of water
      
 bool                                //These variables are used to schedule tasks to be run side-by-side
            readCS=false,            //Used when reading conductivity sensor
@@ -126,16 +131,40 @@ void outputLCD(int row, int col, float arg, int prec){
 }
 
 void updateLCD(){
-  /**
-   * INSERT CODE TO DISPLAY ORGANIZED INFO 
-   * ABOUT FISHTANK ON LCD SCREEN
-   */
-   outputLCD(1,2,"csReading=");                // 
-   outputLCD(1,12,csOutput);                   // 
-   outputLCD(1,17,"Salt=");                    // 
-   outputLCD(1,22,sStatus,4);                  // 
-   outputLCD(1,28,"%");                        // 
-   
+  
+  Serial.flush();                             // Wait for LCD to finish printing before beginning
+  
+  outputLCD(1,2,"csReading=");                // Print CS reading label
+  outputLCD(1,12,csOutput);                   // Print CS reading
+  outputLCD(1,17,"Salt=");                    // Print Salinity label
+  outputLCD(1,22,sStatus,4);                  // Print Salinity
+  outputLCD(1,28,"%");                        // Print percent sign
+  
+  outputLCD(2,2,"tReading=");                 // Print TH reading label
+  outputLCD(2,11,thOutput);                   // Print TH reading
+  outputLCD(2,16,"Temp=");                    // Print Temperature label
+  outputLCD(2,21,tStatus,4);                  // Print Temperature
+  
+  outputLCD(3,3,"Fresh=");                    // Print FWS status label
+  if (fwsStatus==CLOSED){                     // 
+    outputLCD(3,9,"CLOSED");                  // Print FWS status (FWS is CLOSED)
+  } else {                                    // 
+    outputLCD(3,9," OPEN ");                  // Print FWS status (FWS is OPEN)
+  }
+  
+  outputLCD(3,15,"Salty=");                   // Print SWS status label
+  if (swsStatus==CLOSED){                     // 
+    outputLCD(3,21,"CLOSED");                 // Print SWS status (SWS is CLOSED)
+  } else {                                    // 
+    outputLCD(3,21," OPEN ");                 // Print SWS status (SWS is OPEN)
+  }
+  
+  outputLCD(4,9,"Heater is");                 // Print Heater status label
+  if (htrStatus==OFF){                        // 
+    outputLCD(4,19,"OFF");                    // Print Heater status (Heater is OFF)
+  } else {                                    // 
+    outputLCD(4,19,"ON ");                    // Print Heater status (Heater is ON)
+  }
 }
 
 float toVolts(int reading){                    // Usage example: float volts = toVolts(readConductivity());
