@@ -14,7 +14,7 @@ const byte                          //These constants are used to make code more
           SALTY=0,                  //Used by addWater() ex: addWater(SALTY,2000);
           FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000)
 
-const float                         //These constants represent desired salt levels
+const double                         //These constants represent desired salt levels
           SETPOINT=0,               //Desired salinity level
           STDEV=0,                  //Standard deviation of salinity data
           UCL=0,                    //Upper acceptable limit of desired salinity level
@@ -29,7 +29,7 @@ int                                 /*                                          
           csOutput=0,               /*Output of Conductivity Sensor                                       **/
           thOutput=0,               /*Output of Thermister                                                **/
           displaySet=1;             /*Symbolizes which set of data to print to LCD screen                 **/
-float                               /*                                                                    **/
+double                               /*                                                                    **/
           sStatus,                  /*Status of Salinity of water (wt%)                                   **/
           tStatus;                  /*Status of Temperature of water (Degrees)                            **/
                                     /***********************************************************************/
@@ -150,7 +150,7 @@ void outputLCD(int row, int col, String arg){  // Usage example: outputLCD(2,11,
   Serial.print(arg);                           // Serial.print() must be used for variables
 }
 
-void outputLCD(int row, int col, float arg, int prec){
+void outputLCD(int row, int col, double arg, int prec){
                                                // Usage example: outputLCD(3,2,3.1415,4);
   int pos = (107 + (20 * row) + col);          // Calculate what number is needed to pass to Serial.write() in order to
   Serial.write(pos);                           // move to the row and column needed
@@ -198,8 +198,8 @@ void updateLCD(){
   }
 }
 
-float toVolts(int reading){                    // Usage example: float volts = toVolts(readConductivity());
-  return ((( float(reading)) / 1023.0) * 5.0); // Derived from ratio: (reading/1023) = (volts/5V)
+double toVolts(int reading){                    // Usage example: double volts = toVolts(readConductivity());
+  return ((( double(reading)) / 1023.0) * 5.0); // Derived from ratio: (reading/1023) = (volts/5V)
 }
 
 void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,SALTYRELAY)
