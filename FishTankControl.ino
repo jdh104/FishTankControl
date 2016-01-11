@@ -14,7 +14,7 @@ const byte                          //These constants are used to make code more
           SALTY=0,                  //Used by addWater() ex: addWater(SALTY,2000);
           FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000)
 
-const double                         //These constants represent desired salt levels
+const double                        //These constants represent desired salt levels
           SETPOINT=0,               //Desired salinity level
           STDEV=0,                  //Standard deviation of salinity data
           UCL=0,                    //Upper acceptable limit of desired salinity level
@@ -29,7 +29,7 @@ int                                 /*                                          
           csOutput=0,               /*Output of Conductivity Sensor                                       **/
           thOutput=0,               /*Output of Thermister                                                **/
           displaySet=1;             /*Symbolizes which set of data to print to LCD screen                 **/
-double                               /*                                                                    **/
+double                              /*                                                                    **/
           sStatus,                  /*Status of Salinity of water (wt%)                                   **/
           tStatus;                  /*Status of Temperature of water (Degrees)                            **/
                                     /***********************************************************************/
