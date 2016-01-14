@@ -8,17 +8,17 @@ const byte                          //These constants should only be changed if 
           HEATER=5;                 //Digital Pin that provides power to the heater
            
 const byte                          //These constants are used to make code more readable and should NEVER be changed
-          CLOSE=LOW,CLOSED=LOW,     //Used in solenoid()
-          OPEN=HIGH,                //Used in solenoid()
-          ON=HIGH, OFF=LOW,         //Used by htrStatus
+          CLOSE=LOW,CLOSED=LOW,     //Used in solenoid() ex: solenoid(CLOSE,FRESHRELAY);
+          OPEN=HIGH,                //Used in solenoid() ex: solenoid(OPEN,SALTYRELAY);
+          ON=HIGH, OFF=LOW,         //Used by htrStatus  ex: if (htrStatus == ON){}
           SALTY=0,                  //Used by addWater() ex: addWater(SALTY,2000);
-          FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000)
+          FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000);
 
 const double                        //These constants represent desired salt levels
-          SETPOINT=0,               //Desired salinity level
+          SETPOINT=0,               //Desired salinity level (%)
           STDEV=0,                  //Standard deviation of salinity data
-          UCL=0,                    //Upper acceptable limit of desired salinity level
-          LCL=0;                    //Lower acceptable limit of desired salinity level
+          UCL=0,                    //Upper acceptable limit of desired salinity level (%)
+          LCL=0;                    //Lower acceptable limit of desired salinity level (%)
 
                                     /***********************************************************************/
 byte                                /*These variables are used throughout the program to store data       **/
@@ -71,9 +71,9 @@ void loop(){
   events();                                                     // Do scheduled events
   readConductivity();                                           // Read conductivity sensor
   
-  if (csOutput > UCL)
+  if (toPercent(csOutput) > UCL)
     //fixit
-  else if (csOutput < LCL)
+  else if (toPercent(csOutput) < LCL)
     //fixit
   
 }
@@ -159,7 +159,7 @@ void outputLCD(int row, int col, String arg){  // Usage example: outputLCD(2,11,
 }
 
 void outputLCD(int row, int col, double arg, int prec){
-                                               // Usage example: outputLCD(3,2,3.1415,4);
+//                                             // Usage example: outputLCD(3,2,3.1415,4);
   int pos = (107 + (20 * row) + col);          // Calculate what number is needed to pass to Serial.write() in order to
   Serial.write(pos);                           // move to the row and column needed
   Serial.print(arg,prec);                      // Serial.print() must be used for variables
@@ -231,3 +231,8 @@ void addWater(byte type, unsigned long ms){    // Usage example: addWater(SALTY,
     swsSchedule = (millis()+ms);               // Schedule ^ for (ms) milliseconds later
   }                                            // 
 }                                              // 
+
+double toPercent(int reading){
+  return pow(2.71828182846,((double(reading)-135.69764)/(400.04339)));  // Derived from conductivity 
+//                                                                      // calibration spreadsheet
+}
