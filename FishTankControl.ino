@@ -176,26 +176,33 @@ void updateLCD(){
   
   Serial.flush();                             // Wait for LCD to finish printing before beginning
   if (displaySet==1){
-    outputLCD(1,3,"csReading=");              // Print CS reading label
-    outputLCD(1,13,"    ");                   // Clear old CS reading
-    outputLCD(1,13,csOutput);                 // Print CS reading
+    outputLCD(1,2,"LCL");                     // Print LCL label
+    outputLCD(2,1,LCL,3);                     // Print LCL
     
-    outputLCD(2,4,"Salt =");                  // Print Salinity label
-    outputLCD(2,11,sStatus,4);                // Print Salinity
-    outputLCD(2,17,"%");                      // Print percent sign
+    outputLCD(1,9,"SP");                      // Print Setpoint reading label
+    outputLCD(2,8,SETPOINT,3);                // Print Setpoint
     
-    outputLCD(3,4,"Fresh=");                  // Print FWS status label
-    if (fwsStatus==CLOSED){                   // 
-      outputLCD(3,10,"CLOSED");               // Print FWS status (FWS is CLOSED)
-    } else {                                  // 
-      outputLCD(3,10," OPEN ");               // Print FWS status (FWS is OPEN)
-    }
-    outputLCD(4,4,"Salty=");                  // Print SWS status label
+    outputLCD(1,16,"UCL");                    // Print UCL label
+    outputLCD(2,15,UCL,3);                    // Print UCL
+    
+    outputLCD(4,1,"salty");                   // Print SWS status label
     if (swsStatus==CLOSED){                   // 
-      outputLCD(4,10,"CLOSED");               // Print SWS status (SWS is CLOSED)
+      outputLCD(3,1,"CLOSED");                // Print SWS status (SWS is CLOSED)
     } else {                                  // 
-      outputLCD(4,10," OPEN ");               // Print SWS status (SWS is OPEN)
+      outputLCD(3,1," OPEN ");                // Print SWS status (SWS is OPEN)
     }
+    
+    double saltPercent = toPercent(csOutput); // Local variable for percentage of saltwater
+    outputLCD(4,7,"current");                 // Print current percentage label
+    outputLCD(3,8,saltPercent,3);             // Print percentage
+    
+    outputLCD(4,16,"DI");                     // Print FWS status label
+    if (fwsStatus==CLOSED){                   // 
+      outputLCD(3,14,"CLOSED");               // Print FWS status (FWS is CLOSED)
+    } else {                                  // 
+      outputLCD(3,14," OPEN ");               // Print FWS status (FWS is OPEN)
+    }
+
   } else {
     outputLCD(1,3,"thReading=");              // Print TH reading label
     outputLCD(1,13,"    ");                   // Clear old TH reading
