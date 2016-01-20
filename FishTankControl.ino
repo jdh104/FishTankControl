@@ -225,7 +225,7 @@ void addWater(byte type, unsigned long ms){    // Usage example: addWater(SALTY,
   }                                            // 
 }                                              // 
 
-double toPercent(int reading){
+double toPercent(int reading){                 // Usage example: int wtpercent = toPercent(csOutput);
   return pow(2.71828182846,((double(reading)-135.69764)/(400.04339)));  // Derived from conductivity 
 //                                                                      // calibration spreadsheet
 }
