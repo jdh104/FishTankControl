@@ -14,11 +14,11 @@ const byte                          //These constants are used to make code more
           SALTY=0,                  //Used by addWater() ex: addWater(SALTY,2000);
           FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000);
 
-const double                        //These constants represent desired salt levels
+double                              //These constants represent desired salt levels
           MASS=0,                   //Mass of water in tank (g)
           FLOWRATE=0,               //Flow Rate of valves (g/s)
           SETPOINT=0,               //Desired salinity level (%)
-          GAIN=0                    //Gain needed to calculate time to open valves
+          GAIN=0,                   //Gain needed to calculate time to open valves
           OVF=0.15,                 //Overflow fraction that is striaght from input
           STDEV=0,                  //Standard deviation of salinity data (Should be analogRead() value, not wt%)
           UCL,                      //Upper acceptable limit of desired salinity level (%)
