@@ -17,8 +17,8 @@ const byte                          //These constants are used to make code more
 const double                        //These constants represent desired salt levels
           SETPOINT=0,               //Desired salinity level (%)
           STDEV=0,                  //Standard deviation of salinity data
-          UCL=0,                    //Upper acceptable limit of desired salinity level (%)
-          LCL=0;                    //Lower acceptable limit of desired salinity level (%)
+          UCL,                      //Upper acceptable limit of desired salinity level (%)
+          LCL;                      //Lower acceptable limit of desired salinity level (%)
 
                                     /***********************************************************************/
 byte                                /*These variables are used throughout the program to store data       **/
@@ -61,6 +61,10 @@ void setup(){
   formatLCD(true,false,false);                 // Turn display on, cursor off, character blink off
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
+  
+  LCL = (SETPOINT - (3 * STDEV));              // Calculate Lower Control Limit
+  UCL = (SETPOINT + (3 * STDEV));              // Calculate Upper Control Limit
+  
 }
 
 void loop(){
