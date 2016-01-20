@@ -15,8 +15,12 @@ const byte                          //These constants are used to make code more
           FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000);
 
 const double                        //These constants represent desired salt levels
+          MASS=0,                   //Mass of water in tank (g)
+          FLOWRATE=0,               //Flow Rate of valves (g/s)
           SETPOINT=0,               //Desired salinity level (%)
-          STDEV=0,                  //Standard deviation of salinity data
+          GAIN=0                    //Gain needed to calculate time to open valves
+          OVF=0.15,                 //Overflow fraction that is striaght from input
+          STDEV=0,                  //Standard deviation of salinity data (Should be analogRead() value, not wt%)
           UCL,                      //Upper acceptable limit of desired salinity level (%)
           LCL;                      //Lower acceptable limit of desired salinity level (%)
 
@@ -62,8 +66,8 @@ void setup(){
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
   
-  LCL = (SETPOINT - (3 * STDEV));              // Calculate Lower Control Limit
-  UCL = (SETPOINT + (3 * STDEV));              // Calculate Upper Control Limit
+  LCL=(SETPOINT-(3*toPercent(int(STDEV))));    // Calculate Lower Control Limit
+  UCL=(SETPOINT+(3*toPercent(int(STDEV))));    // Calculate Upper Control Limit
   
 }
 
@@ -72,6 +76,12 @@ void loop(){
   PRESENT = millis();                                           // Update current time
   events();                                                     // Do scheduled events
   readConductivity();                                           // Read conductivity sensor
+  
+  if (toPercent(csOutput) > UCL){                               // If wtpercent NaCl is too high
+    addWater(FRESH,getOpenTime());
+  } else if (toPercent(csOutput) > LCL){                        // If wtpercent NaCl is too low
+    addWater(SALTY,getOpenTime());
+  }
   
 }
 
@@ -233,3 +243,10 @@ double toPercent(int reading){                 // Usage example: int wtpercent =
   return pow(2.71828182846,((double(reading)-135.69764)/(400.04339)));  // Derived from conductivity 
 //                                                                      // calibration spreadsheet
 }
+
+long getOpenTime(){                            // Usage example: addWater(SALTY,getOpenTime());
+  double SALINITY = toPercent(csOutput);
+  return abs(long(double(1000.0) * (MASS * GAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+}
+
+
