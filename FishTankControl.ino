@@ -248,6 +248,10 @@ double toPercent(int reading){                 // Usage example: int wtpercent =
   return pow(2.71828182846,((double(reading)-1598.93492766)/146.5571565956));    // Derived from conductivity 
 //                                                                               // calibration spreadsheet
 }
+int toReading(double percent){
+  return int(146.5571565956 * log(percent) + 1598.93492766);                     // Taken from conductivity
+//                                                                               // calibration spreadsheet
+}
 
 long getFreshOpenTime(){                       // Usage example: addWater(FRESH,getFreshOpenTime());
   double SALINITY = toPercent(csOutput);
