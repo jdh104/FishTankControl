@@ -18,7 +18,8 @@ double                              //These constants represent desired salt lev
           MASS=0,                   //Mass of water in tank (g)
           FLOWRATE=0,               //Flow Rate of valves (g/s)
           SETPOINT=0,               //Desired salinity level (%)
-          GAIN=0,                   //Gain needed to calculate time to open valves
+          FRESHGAIN=0.8,            //Gain used when adding fresh water
+          SALTYGAIN=0.8,            //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
           STDEV=0,                  //Standard deviation of salinity data (Should be analogRead() value, not wt%)
           UCL,                      //Upper acceptable limit of desired salinity level (%)
@@ -40,20 +41,22 @@ double                              /*                                          
 
 const unsigned long                 //These constants used to define times and intervals
           DST=5000,                 //Represents the time between each display set switch (ms)
-          LCD=500;                  //Represents the time between each update of LCD Screen (ms)
+          LCD=500,                  //Represents the time between each update of LCD Screen (ms)
+          DEADTIME=12000;           //Represents the deadtime compensation for salinity
 
 bool                                //These variables are used to schedule tasks to be run side-by-side
           readCS=false,             //Used when reading conductivity sensor  -> conductivitySchedule
           closeSWS=false,           //Used after opening saltwater solenoid  -> swsSchedule
           closeFWS=false;           //Used after opening freshwater solenoid -> fwsSchedule
-           
+          
 unsigned long                       //These variables are used to schedule tasks to be run side-by-side
           PRESENT=0,                //This variable represents the current time on the system clock
-          conductivitySchedule,     //Represents the time scheduled to read the CS
-          swsSchedule,              //Represents the time scheduled to close saltwater solenoid
-          fwsSchedule,              //Represents the time scheduled to close freshwater solenoid
+          conductivitySchedule=100, //Represents the time scheduled to read the CS
+          swsSchedule=0,            //Represents the time scheduled to close saltwater solenoid
+          fwsSchedule=0,            //Represents the time scheduled to close freshwater solenoid
           displaySwitchSchedule=DST,//Represents the time scheduled to switch display set
           lcdUpdateSchedule=0;      //Represents the time scheduled to update LCD Screen
+          adjustSalinity=1000;      //Represents the time scheduled to adjust salinity (DEADTIME)
 
 void setup(){
   Serial.begin(9600);                          // Set baud rate of LCD to 9600 bps
@@ -76,12 +79,6 @@ void loop(){
   PRESENT = millis();                                           // Update current time
   events();                                                     // Do scheduled events
   readConductivity();                                           // Read conductivity sensor
-  
-  if (toPercent(csOutput) > UCL){                               // If wtpercent NaCl is too high
-    addWater(FRESH,getOpenTime());
-  } else if (toPercent(csOutput) > LCL){                        // If wtpercent NaCl is too low
-    addWater(SALTY,getOpenTime());
-  }
   
 }
 
@@ -111,6 +108,14 @@ void events(){                                                  // Usage example
   if (PRESENT>lcdUpdateSchedule){                               // If updateLCD() is scheduled for now
     updateLCD();                                                // Update the LCD Screen
     lcdUpdateSchedule += LCD;                                   // Re-Schedule this event
+  }
+  if (PRESENT>adjustSalinity){                                  // If adjusting salinity is scheduled for now
+    if (toPercent(csOutput) > UCL){                             // If wtpercent NaCl is too high
+      addWater(FRESH,getFreshOpenTime());                       // Add fresh water
+    } else if (toPercent(csOutput) < LCL){                      // If wtpercent NaCl is too low
+      addWater(SALTY,getSaltyOpenTime());                       // Add salty water
+    }
+    adjustSalinity += DEADTIME;
   }
 }
 
@@ -233,7 +238,7 @@ void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,S
   }                                            // 
 }                                              // 
 
-void addWater(byte type, unsigned long ms){    // Usage example: addWater(SALTY,2000)
+void addWater(byte type, long ms){             // Usage example: addWater(SALTY,2000)
   if (type==FRESH && !closeFWS){               // Only pass this if closeFWS is not already scheduled
     solenoid(OPEN,FRESHRELAY);                 // Open freshwater solenoid
     closeFWS=true;                             // Schedule a task to close freshwater solenoid
@@ -247,13 +252,16 @@ void addWater(byte type, unsigned long ms){    // Usage example: addWater(SALTY,
 }                                              // 
 
 double toPercent(int reading){                 // Usage example: int wtpercent = toPercent(csOutput);
-  return pow(2.71828182846,((double(reading)-135.69764)/(400.04339)));  // Derived from conductivity 
-//                                                                      // calibration spreadsheet
+  return pow(2.71828182846,((double(reading)-1598.93492766)/146.5571565956));    // Derived from conductivity 
+//                                                                               // calibration spreadsheet
 }
 
-long getOpenTime(){                            // Usage example: addWater(SALTY,getOpenTime());
+long getFreshOpenTime(){                       // Usage example: addWater(FRESH,getFreshOpenTime());
   double SALINITY = toPercent(csOutput);
-  return abs(long(double(1000.0) * (MASS * GAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+  return abs(long(double(1000.0) * (MASS * FRESHGAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
 }
-
+long getSaltyOpenTime(){                       // Usage example: addWater(SALTY,getSaltyOpenTime());
+  double SALINITY = toPercent(csOutput);
+  return abs(long(double(1000.0) * (MASS * SALTYGAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+}
 
