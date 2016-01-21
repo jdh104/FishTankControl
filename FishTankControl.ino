@@ -69,8 +69,8 @@ void setup(){
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
   
-  LCL=(SETPOINT-(3*toPercent(int(STDEV))));    // Calculate Lower Control Limit
-  UCL=(SETPOINT+(3*toPercent(int(STDEV))));    // Calculate Upper Control Limit
+  LCL=toPercent(toReading(SETPOINT)-(3*STDEV));    // Calculate Lower Control Limit
+  UCL=toPercent(toReading(SETPOINT)+(3*STDEV));    // Calculate Upper Control Limit
   
 }
 
