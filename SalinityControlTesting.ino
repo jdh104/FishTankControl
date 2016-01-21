@@ -95,7 +95,7 @@ void events(){                                                  // Usage example
   if (closeSWS && PRESENT>swsSchedule){                         // If closeSaltySolenoid() is scheduled for now
     solenoid(CLOSE,SALTY);                                      // Close the SWS
     closeSWS=false;                                             // Un-Schedule this event
-  }
+  }/*
   if (PRESENT>displaySwitchSchedule){                           // If Switch Display Set is scheduled for now
     if (displaySet==1){                                         // vvvvvvvvvvvvvvvvvvvvvvvv
       displaySet=2;                                             // Switch Display Set
@@ -104,7 +104,7 @@ void events(){                                                  // Usage example
     }                                                           // 
     displaySwitchSchedule += DST;                               // Re-schedule event
     clearLCD();                                                 // Clear the LCD screen
-  }
+  }*/
   if (PRESENT>lcdUpdateSchedule){                               // If updateLCD() is scheduled for now
     updateLCD();                                                // Update the LCD Screen
     lcdUpdateSchedule += LCD;                                   // Re-Schedule this event
