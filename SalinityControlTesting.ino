@@ -55,7 +55,7 @@ unsigned long                       //These variables are used to schedule tasks
           swsSchedule=0,            //Represents the time scheduled to close saltwater solenoid
           fwsSchedule=0,            //Represents the time scheduled to close freshwater solenoid
           displaySwitchSchedule=DST,//Represents the time scheduled to switch display set
-          lcdUpdateSchedule=0;      //Represents the time scheduled to update LCD Screen
+          lcdUpdateSchedule=0,      //Represents the time scheduled to update LCD Screen
           adjustSalinity=1000;      //Represents the time scheduled to adjust salinity (DEADTIME)
 
 void setup(){
