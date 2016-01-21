@@ -68,6 +68,10 @@ void setup(){
   formatLCD(true,false,false);                 // Turn display on, cursor off, character blink off
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
+  
+  LCL=(SETPOINT-(3*toPercent(int(STDEV))));    // Calculate Lower Control Limit
+  UCL=(SETPOINT+(3*toPercent(int(STDEV))));    // Calculate Upper Control Limit
+  
 }
 
 void loop(){
