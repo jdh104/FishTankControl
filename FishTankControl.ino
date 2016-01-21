@@ -61,6 +61,8 @@ void setup(){
   formatLCD(true,false,false);                 // Turn display on, cursor off, character blink off
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
+  
+  //calculate LCL and UCL
 }
 
 void loop(){
@@ -69,6 +71,10 @@ void loop(){
   events();                                                     // Do scheduled events
   readConductivity();                                           // Read conductivity sensor
   
+  if (csOutput > UCL)
+    //fixit
+  else if (csOutput < LCL)
+    //fixit
   
 }
 
