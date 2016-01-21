@@ -105,6 +105,14 @@ void events(){                                                  // Usage example
     updateLCD();                                                // Update the LCD Screen
     lcdUpdateSchedule += LCD;                                   // Re-Schedule this event
   }
+  if (PRESENT>adjustSalinity){                                  // If adjusting salinity is scheduled for now
+    if (toPercent(csOutput) > UCL){                             // If wtpercent NaCl is too high
+      addWater(FRESH,getFreshOpenTime());                       // Add fresh water
+    } else if (toPercent(csOutput) < LCL){                      // If wtpercent NaCl is too low
+      addWater(SALTY,getSaltyOpenTime());                       // Add salty water
+    }
+    adjustSalinity += DEADTIME;
+  }
 }
 
 void readConductivity(){                       // Usage example: int saltLevel = readConductivity();
