@@ -239,3 +239,17 @@ void addWater(byte type, unsigned long ms){    // Usage example: addWater(SALTY,
     swsSchedule = (millis()+ms);               // Schedule ^ for (ms) milliseconds later
   }                                            // 
 }                                              // 
+
+double toPercent(int reading){                 // Usage example: int wtpercent = toPercent(csOutput);
+  return pow(2.71828182846,((double(reading)-1598.93492766)/146.5571565956));    // Derived from conductivity 
+//                                                                               // calibration spreadsheet
+}
+
+long getFreshOpenTime(){                       // Usage example: addWater(FRESH,getFreshOpenTime());
+  double SALINITY = toPercent(csOutput);
+  return abs(long(double(1000.0) * (MASS * FRESHGAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+}
+long getSaltyOpenTime(){                       // Usage example: addWater(SALTY,getSaltyOpenTime());
+  double SALINITY = toPercent(csOutput);
+  return abs(long(double(1000.0) * (MASS * SALTYGAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+}
