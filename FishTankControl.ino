@@ -8,17 +8,22 @@ const byte                          //These constants should only be changed if 
           HEATER=5;                 //Digital Pin that provides power to the heater
            
 const byte                          //These constants are used to make code more readable and should NEVER be changed
-          CLOSE=LOW,CLOSED=LOW,     //Used in solenoid()
-          OPEN=HIGH,                //Used in solenoid()
-          ON=HIGH, OFF=LOW,         //Used by htrStatus
+          CLOSE=LOW,CLOSED=LOW,     //Used in solenoid() ex: solenoid(CLOSE,FRESHRELAY);
+          OPEN=HIGH,                //Used in solenoid() ex: solenoid(OPEN,SALTYRELAY);
+          ON=HIGH, OFF=LOW,         //Used by htrStatus  ex: if (htrStatus == ON){}
           SALTY=0,                  //Used by addWater() ex: addWater(SALTY,2000);
-          FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000)
+          FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000);
 
-const double                        //These constants represent desired salt levels
-          SETPOINT=0,               //Desired salinity level
-          STDEV=0,                  //Standard deviation of salinity data
-          UCL=0,                    //Upper acceptable limit of desired salinity level
-          LCL=0;                    //Lower acceptable limit of desired salinity level
+double                              //These constants represent desired salt levels
+          MASS=0,                   //Mass of water in tank (g)
+          FLOWRATE=0,               //Flow Rate of valves (g/s)
+          SETPOINT=0,               //Desired salinity level (%)
+          FRESHGAIN=0.8,            //Gain used when adding fresh water
+          SALTYGAIN=0.8,            //Gain used when adding salty water
+          OVF=0.15,                 //Overflow fraction that is striaght from input
+          STDEV=0,                  //Standard deviation of salinity data (Should be analogRead() value, not wt%)
+          UCL,                      //Upper acceptable limit of desired salinity level (%)
+          LCL;                      //Lower acceptable limit of desired salinity level (%)
 
                                     /***********************************************************************/
 byte                                /*These variables are used throughout the program to store data       **/
@@ -36,20 +41,22 @@ double                              /*                                          
 
 const unsigned long                 //These constants used to define times and intervals
           DST=5000,                 //Represents the time between each display set switch (ms)
-          LCD=500;                  //Represents the time between each update of LCD Screen (ms)
+          LCD=500,                  //Represents the time between each update of LCD Screen (ms)
+          DEADTIME=12000;           //Represents the deadtime compensation for salinity
 
 bool                                //These variables are used to schedule tasks to be run side-by-side
           readCS=false,             //Used when reading conductivity sensor  -> conductivitySchedule
           closeSWS=false,           //Used after opening saltwater solenoid  -> swsSchedule
           closeFWS=false;           //Used after opening freshwater solenoid -> fwsSchedule
-           
+          
 unsigned long                       //These variables are used to schedule tasks to be run side-by-side
           PRESENT=0,                //This variable represents the current time on the system clock
-          conductivitySchedule,     //Represents the time scheduled to read the CS
-          swsSchedule,              //Represents the time scheduled to close saltwater solenoid
-          fwsSchedule,              //Represents the time scheduled to close freshwater solenoid
+          conductivitySchedule=100, //Represents the time scheduled to read the CS
+          swsSchedule=0,            //Represents the time scheduled to close saltwater solenoid
+          fwsSchedule=0,            //Represents the time scheduled to close freshwater solenoid
           displaySwitchSchedule=DST,//Represents the time scheduled to switch display set
           lcdUpdateSchedule=0;      //Represents the time scheduled to update LCD Screen
+          adjustSalinity=1000;      //Represents the time scheduled to adjust salinity (DEADTIME)
 
 void setup(){
   Serial.begin(9600);                          // Set baud rate of LCD to 9600 bps
