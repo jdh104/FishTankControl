@@ -69,8 +69,8 @@ void setup(){
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
   
-  LCL=(SETPOINT-(3*toPercent(int(STDEV))));    // Calculate Lower Control Limit
-  UCL=(SETPOINT+(3*toPercent(int(STDEV))));    // Calculate Upper Control Limit
+  LCL=toPercent(toReading(SETPOINT)-(3*STDEV));    // Calculate Lower Control Limit
+  UCL=toPercent(toReading(SETPOINT)+(3*STDEV));    // Calculate Upper Control Limit
   
 }
 
@@ -255,6 +255,10 @@ double toPercent(int reading){                 // Usage example: int wtpercent =
   return pow(2.71828182846,((double(reading)-1598.93492766)/146.5571565956));    // Derived from conductivity 
 //                                                                               // calibration spreadsheet
 }
+int toReading(double percent){
+  return int(146.5571565956 * log(percent) + 1598.93492766);                       // Taken from conductivity
+//                                                                               // calibration spreadsheet
+}
 
 long getFreshOpenTime(){                       // Usage example: addWater(FRESH,getFreshOpenTime());
   double SALINITY = toPercent(csOutput);
@@ -264,4 +268,3 @@ long getSaltyOpenTime(){                       // Usage example: addWater(SALTY,
   double SALINITY = toPercent(csOutput);
   return abs(long(double(1000.0) * (MASS * SALTYGAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
 }
-
