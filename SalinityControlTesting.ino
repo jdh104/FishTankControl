@@ -95,7 +95,7 @@ void events(){                                                  // Usage example
   if (closeSWS && PRESENT>swsSchedule){                         // If closeSaltySolenoid() is scheduled for now
     solenoid(CLOSE,SALTY);                                      // Close the SWS
     closeSWS=false;                                             // Un-Schedule this event
-  }
+  }/*
   if (PRESENT>displaySwitchSchedule){                           // If Switch Display Set is scheduled for now
     if (displaySet==1){                                         // vvvvvvvvvvvvvvvvvvvvvvvv
       displaySet=2;                                             // Switch Display Set
@@ -104,7 +104,7 @@ void events(){                                                  // Usage example
     }                                                           // 
     displaySwitchSchedule += DST;                               // Re-schedule event
     clearLCD();                                                 // Clear the LCD screen
-  }
+  }*/
   if (PRESENT>lcdUpdateSchedule){                               // If updateLCD() is scheduled for now
     updateLCD();                                                // Update the LCD Screen
     lcdUpdateSchedule += LCD;                                   // Re-Schedule this event
@@ -171,7 +171,7 @@ void outputLCD(int row, int col, String arg){  // Usage example: outputLCD(2,11,
 }
 
 void outputLCD(int row, int col, double arg, int prec){
-                                               // Usage example: outputLCD(3,2,3.1415,4);
+//                                             // Usage example: outputLCD(3,2,3.1415,4);
   int pos = (107 + (20 * row) + col);          // Calculate what number is needed to pass to Serial.write() in order to
   Serial.write(pos);                           // move to the row and column needed
   Serial.print(arg,prec);                      // Serial.print() must be used for variables
@@ -181,26 +181,33 @@ void updateLCD(){
   
   Serial.flush();                             // Wait for LCD to finish printing before beginning
   if (displaySet==1){
-    outputLCD(1,3,"csReading=");              // Print CS reading label
-    outputLCD(1,13,"    ");                   // Clear old CS reading
-    outputLCD(1,13,csOutput);                 // Print CS reading
+    outputLCD(1,2,"LCL");                     // Print LCL label
+    outputLCD(2,1,LCL,3);                     // Print LCL
     
-    outputLCD(2,4,"Salt =");                  // Print Salinity label
-    outputLCD(2,11,sStatus,4);                // Print Salinity
-    outputLCD(2,17,"%");                      // Print percent sign
+    outputLCD(1,9,"SP");                      // Print Setpoint reading label
+    outputLCD(2,8,SETPOINT,3);                // Print Setpoint
     
-    outputLCD(3,4,"Fresh=");                  // Print FWS status label
-    if (fwsStatus==CLOSED){                   // 
-      outputLCD(3,10,"CLOSED");               // Print FWS status (FWS is CLOSED)
-    } else {                                  // 
-      outputLCD(3,10," OPEN ");               // Print FWS status (FWS is OPEN)
-    }
-    outputLCD(4,4,"Salty=");                  // Print SWS status label
+    outputLCD(1,16,"UCL");                    // Print UCL label
+    outputLCD(2,15,UCL,3);                    // Print UCL
+    
+    outputLCD(4,1,"salty");                   // Print SWS status label
     if (swsStatus==CLOSED){                   // 
-      outputLCD(4,10,"CLOSED");               // Print SWS status (SWS is CLOSED)
+      outputLCD(3,1,"CLOSED");                // Print SWS status (SWS is CLOSED)
     } else {                                  // 
-      outputLCD(4,10," OPEN ");               // Print SWS status (SWS is OPEN)
+      outputLCD(3,1," OPEN ");                // Print SWS status (SWS is OPEN)
     }
+    
+    double saltPercent = toPercent(csOutput); // Local variable for percentage of saltwater
+    outputLCD(4,7,"current");                 // Print current percentage label
+    outputLCD(3,8,saltPercent,3);             // Print percentage
+    
+    outputLCD(4,16,"DI");                     // Print FWS status label
+    if (fwsStatus==CLOSED){                   // 
+      outputLCD(3,14,"CLOSED");               // Print FWS status (FWS is CLOSED)
+    } else {                                  // 
+      outputLCD(3,14," OPEN ");               // Print FWS status (FWS is OPEN)
+    }
+
   } else {
     outputLCD(1,3,"thReading=");              // Print TH reading label
     outputLCD(1,13,"    ");                   // Clear old TH reading
@@ -231,7 +238,7 @@ void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,S
   }                                            // 
 }                                              // 
 
-void addWater(byte type, unsigned long ms){    // Usage example: addWater(SALTY,2000)
+void addWater(byte type, long ms){             // Usage example: addWater(SALTY,2000)
   if (type==FRESH && !closeFWS){               // Only pass this if closeFWS is not already scheduled
     solenoid(OPEN,FRESHRELAY);                 // Open freshwater solenoid
     closeFWS=true;                             // Schedule a task to close freshwater solenoid
@@ -249,7 +256,7 @@ double toPercent(int reading){                 // Usage example: int wtpercent =
 //                                                                               // calibration spreadsheet
 }
 int toReading(double percent){
-  return int(146.5571565956 * log(percent) + 1598.93492766);                     // Taken from conductivity
+  return int(146.5571565956 * log(percent) + 1598.93492766);                       // Taken from conductivity
 //                                                                               // calibration spreadsheet
 }
 
