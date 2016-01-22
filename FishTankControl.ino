@@ -11,8 +11,8 @@ const byte                          //These constants are used to make code more
           CLOSE=LOW,CLOSED=LOW,     //Used in solenoid() ex: solenoid(CLOSE,FRESHRELAY);
           OPEN=HIGH,                //Used in solenoid() ex: solenoid(OPEN,SALTYRELAY);
           ON=HIGH, OFF=LOW,         //Used by htrStatus  ex: if (htrStatus == ON){}
-          SALTY=0,                  //Used by addWater() ex: addWater(SALTY,2000);
-          FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000);
+          SALTY=SALTYRELAY,         //Used by addWater() ex: addWater(SALTY,2000);
+          FRESH=FRESHRELAY;         //Used by addWater() ex: addWater(FRESH,2000);
 
 double                              //These constants represent desired salt levels
           MASS=0,                   //Mass of water in tank (g)
