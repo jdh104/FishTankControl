@@ -15,7 +15,7 @@ const byte                          //These constants are used to make code more
           FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000);
 
 double                              //These constants represent desired salt levels
-          MASS=0,                   //Mass of water in tank (g)
+          MASS=87.8,                //Mass of water in tank (g)
           FLOWRATE=0,               //Flow Rate of valves (g/s)
           SETPOINT=0,               //Desired salinity level (%)
           FRESHGAIN=0.8,            //Gain used when adding fresh water
