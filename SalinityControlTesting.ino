@@ -11,12 +11,12 @@ const byte                          //These constants are used to make code more
           CLOSE=LOW,CLOSED=LOW,     //Used in solenoid() ex: solenoid(CLOSE,FRESHRELAY);
           OPEN=HIGH,                //Used in solenoid() ex: solenoid(OPEN,SALTYRELAY);
           ON=HIGH, OFF=LOW,         //Used by htrStatus  ex: if (htrStatus == ON){}
-          SALTY=0,                  //Used by addWater() ex: addWater(SALTY,2000);
-          FRESH=1;                  //Used by addWater() ex: addWater(FRESH,2000);
+          SALTY=SALTYRELAY,         //Used by addWater() ex: addWater(SALTY,2000);
+          FRESH=FRESHRELAY;         //Used by addWater() ex: addWater(FRESH,2000);
 
 double                              //These constants represent desired salt levels
           MASS=87.8,                //Mass of water in tank (g)
-          FLOWRATE=0,               //Flow Rate of valves (g/s)
+          FLOWRATE=6.67,            //Flow Rate of valves (g/s)
           SETPOINT=0,               //Desired salinity level (%)
           FRESHGAIN=0.8,            //Gain used when adding fresh water
           SALTYGAIN=0.8,            //Gain used when adding salty water
@@ -42,7 +42,7 @@ double                              /*                                          
 const unsigned long                 //These constants used to define times and intervals
           DST=5000,                 //Represents the time between each display set switch (ms)
           LCD=500,                  //Represents the time between each update of LCD Screen (ms)
-          DEADTIME=12000;           //Represents the deadtime compensation for salinity
+          DEADTIME=12000;           //Represents the deadtime compensation for salinity (ms)
 
 bool                                //These variables are used to schedule tasks to be run side-by-side
           readCS=false,             //Used when reading conductivity sensor  -> conductivitySchedule
@@ -86,6 +86,7 @@ void events(){                                                  // Usage example
   if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity() is scheduled for now
     csOutput = analogRead(CSENSORINPUT);                        // Read the conductivity sensor
     digitalWrite(CSENSORPOWER,LOW);                             // Turn off power to conductivity sensor
+    csStatus = toPercent(csOutput);                             // Convert output to wtpercent
     readCS=false;                                               // Un-Schedule this event
   }
   if (closeFWS && PRESENT>fwsSchedule){                         // If closeFreshSolenoid() is scheduled for now
@@ -251,12 +252,12 @@ void addWater(byte type, long ms){             // Usage example: addWater(SALTY,
   }                                            // 
 }                                              // 
 
-double toPercent(int reading){                 // Usage example: int wtpercent = toPercent(csOutput);
+double toPercent(int reading){                 // Usage example: double wtpercent = toPercent(csOutput);
   return pow(2.71828182846,((double(reading)-1598.93492766)/146.5571565956));    // Derived from conductivity 
 //                                                                               // calibration spreadsheet
 }
-int toReading(double percent){
-  return int(146.5571565956 * log(percent) + 1598.93492766);                       // Taken from conductivity
+int toReading(double percent){                 // Usage example: int reading = toReading(wtpercent);
+  return int(146.5571565956 * log(percent) + 1598.93492766);                     // Taken from conductivity
 //                                                                               // calibration spreadsheet
 }
 
