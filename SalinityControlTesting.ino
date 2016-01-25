@@ -21,7 +21,7 @@ double                              //These constants represent desired salt lev
           FRESHGAIN=0.8,            //Gain used when adding fresh water
           SALTYGAIN=0.8,            //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
-          STDEV=0,                  //Standard deviation of salinity data (Should be analogRead() value, not wt%)
+          STDEV,//=3.3530183665     //Standard deviation of salinity data (Should be analogRead() value, not wt%)
           UCL,                      //Upper acceptable limit of desired salinity level (%)
           LCL;                      //Lower acceptable limit of desired salinity level (%)
 
