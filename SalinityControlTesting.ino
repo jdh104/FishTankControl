@@ -17,9 +17,9 @@ const byte                          //These constants are used to make code more
 double                              //These constants represent desired salt levels
           MASS=87.8,                //Mass of water in tank (g)
           FLOWRATE=6.67,            //Flow Rate of valves (g/s)
-          SETPOINT=0,               //Desired salinity level (%)
-          FRESHGAIN=0.8,            //Gain used when adding fresh water
-          SALTYGAIN=0.8,            //Gain used when adding salty water
+          SETPOINT=0.0009,          //Desired salinity level (Decimal)
+          FRESHGAIN=1.80,           //Gain used when adding fresh water
+          SALTYGAIN=0.15,           //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
           STDEV = 4.159590487,      //Standard deviation of salinity data (Should be analogRead() value, not wt%)
           UCL,                      //Upper acceptable limit of desired salinity level (%)
@@ -59,7 +59,7 @@ unsigned long                       //These variables are used to schedule tasks
           fwsSchedule=0,            //Represents the time scheduled to close freshwater solenoid
           displaySwitchSchedule=DST,//Represents the time scheduled to switch display set
           lcdUpdateSchedule=0,      //Represents the time scheduled to update LCD Screen
-          checkSalinity=1000,       //Represents the time scheduled to check salinity (>DEADTIME<)
+          checkSalinity=10000,      //Represents the time scheduled to check salinity (>DEADTIME<)
           adjustSchedule=0;         //Represents the time scheduled to adjust salinity
 
 void setup(){
@@ -119,11 +119,12 @@ void events(){                                                  // Usage example
     if (sStatus > UCL){                                         //   If wtpercent NaCl is too high:
       tooSalty = true;                                          //     Update status
       adjustSchedule = PRESENT + SALTYDEADTIME;                 //     Wait for readings to even out before adding water
+      checkSalinity += 20000;                                   //     Check every 20 seconds
     } else if (sStatus < LCL){                                  //   If wtpercent NaCl is too low:
       tooFresh = true;                                          //     Update status
       adjustSchedule = PRESENT + FRESHDEADTIME;                 //     Wait for readings to even out before adding water
+      checkSalinity += 20000;                                   //     Check every 20 seconds
     }                                                           // 
-    checkSalinity += 1000;                                      //   Check every second
   }
   if (PRESENT>adjustSchedule && (tooSalty || tooFresh)){        // If adjusting salinity is scheduled for now:
     if (tooSalty){                                              //   If water is too salty:
@@ -199,13 +200,16 @@ void updateLCD(){
   Serial.flush();                             // Wait for LCD to finish printing before beginning
   if (displaySet==1){
     outputLCD(1,2,"LCL");                     // Print LCL label
-    outputLCD(2,1,LCL,3);                     // Print LCL
+    outputLCD(2,1,LCL*100,3);                 // Print LCL
+    outputLCD(2,6,"%");
     
     outputLCD(1,9,"SP");                      // Print Setpoint reading label
-    outputLCD(2,8,SETPOINT,3);                // Print Setpoint
+    outputLCD(2,8,SETPOINT*100,3);            // Print Setpoint
+    outputLCD(2,13,"%");
     
     outputLCD(1,16,"UCL");                    // Print UCL label
-    outputLCD(2,15,UCL,3);                    // Print UCL
+    outputLCD(2,15,UCL*100,3);                // Print UCL
+    outputLCD(2,20,"%");
     
     outputLCD(4,1,"salty");                   // Print SWS status label
     if (swsStatus==CLOSED){                   // 
@@ -214,9 +218,9 @@ void updateLCD(){
       outputLCD(3,1," OPEN ");                // Print SWS status (SWS is OPEN)
     }
     
-    double saltPercent = toPercent(csOutput); // Local variable for percentage of saltwater
     outputLCD(4,7,"current");                 // Print current percentage label
-    outputLCD(3,8,saltPercent,3);             // Print percentage
+    outputLCD(3,8,sStatus*100,3);             // Print percentage
+    outputLCD(3,13,"%");
     
     outputLCD(4,16,"DI");                     // Print FWS status label
     if (fwsStatus==CLOSED){                   // 
@@ -256,15 +260,20 @@ void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,S
 }                                              // 
 
 void addWater(byte type, long ms){             // Usage example: addWater(SALTY,2000)
-  if (type==FRESH && !closeFWS){               // Only pass this if closeFWS is not already scheduled:
-    solenoid(OPEN,FRESHRELAY);                 //   Open freshwater solenoid
-    closeFWS=true;                             //   Schedule a task to close freshwater solenoid
-    fwsSchedule = (millis()+ms);               //   Schedule ^ for (ms) milliseconds later
-  }                                            // 
-  if (type==SALTY && !closeSWS){               // Only pass this if closeSWS is not already scheduled:
-    solenoid(OPEN,SALTYRELAY);                 //   Open saltwater solenoid
-    closeSWS=true;                             //   Schedule a task to close saltwater solenoid
-    swsSchedule = (millis()+ms);               //    Schedule ^ for (ms) milliseconds later
+  if (sStatus > UCL || sStatus < LCL){         // Only pass if the salinity is not correct
+    if (type==FRESH && !closeFWS){             //   Only pass this if closeFWS is not already scheduled:
+      solenoid(OPEN,FRESHRELAY);               //     Open freshwater solenoid
+      closeFWS=true;                           //     Schedule a task to close freshwater solenoid
+      fwsSchedule = (millis()+ms);             //     Schedule ^ for (ms) milliseconds later
+    }                                          // 
+    if (type==SALTY && !closeSWS){             //   Only pass this if closeSWS is not already scheduled:
+      solenoid(OPEN,SALTYRELAY);               //     Open saltwater solenoid
+      closeSWS=true;                           //     Schedule a task to close saltwater solenoid
+      swsSchedule = (millis()+ms);             //      Schedule ^ for (ms) milliseconds later
+    }                                          // 
+  } else {                                     // If false alarm
+    tooFresh=false;                            //   Reset status
+    tooSalty=false;                            //   Reset status
   }                                            // 
 }                                              // 
 
