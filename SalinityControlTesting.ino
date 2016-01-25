@@ -17,7 +17,7 @@ const byte                          //These constants are used to make code more
 double                              //These constants represent desired salt levels
           MASS=87.8,                //Mass of water in tank (g)
           FLOWRATE=6.67,            //Flow Rate of valves (g/s)
-          SETPOINT=0.0009,          //Desired salinity level (Decimal)
+          SETPOINT=0.001,           //Desired salinity level (Decimal)
           FRESHGAIN=1.80,           //Gain used when adding fresh water
           SALTYGAIN=0.15,           //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
