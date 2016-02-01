@@ -2,6 +2,7 @@
 const byte                          //These constants should only be changed if the circuit is changed
           CSENSORPOWER=2,           //Digital Pin that provides power to Conductivity Sensor (CS)
           CSENSORINPUT=0,           //Analog Pin that is used to read in a value from the CS
+          THERMINPUT=1,             //Analog Pin that is used to read in a value from the thermistor (TH)
           TXPIN=1,                  //Digital Pin that is used to transmit data via "Serial"
           FRESHRELAY=4,             //Digital Pin that is used to energize fresh water relay (FWR)
           SALTYRELAY=3,             //Digital Pin that is used to energize salty water relay (SWR)
