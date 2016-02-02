@@ -8,16 +8,8 @@ const byte                          //These constants are used to make code more
           OPEN=HIGH,                //Used in solenoid() ex: solenoid(OPEN,SALTYRELAY);
           ON=HIGH, OFF=LOW;         //Used by htrStatus  ex: if (htrStatus == ON){}
 
-double                              //These constants represent desired salt levels
-          MASS=0,                   //Mass of water in tank (g)
-          FLOWRATE=0,               //Flow Rate of valves (g/s)
-          SETPOINT=0,               //Desired salinity level (%)
-          FRESHGAIN=0.8,            //Gain used when adding fresh water
-          SALTYGAIN=0.8,            //Gain used when adding salty water
-          OVF=0.15,                 //Overflow fraction that is striaght from input
-          STDEV=0,                  //Standard deviation of salinity data (Should be analogRead() value, not wt%)
-          UCL,                      //Upper acceptable limit of desired salinity level (%)
-          LCL;                      //Lower acceptable limit of desired salinity level (%)
+double                              //These constants represent measured values
+          MASS=87.8;                //Mass of water in tank (g)
 
                                     /***********************************************************************/
 byte                                /*These variables are used throughout the program to store data       **/
