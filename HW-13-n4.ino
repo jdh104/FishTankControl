@@ -2,6 +2,7 @@
 const byte                          //These constants should only be changed if the circuit is changed
           CSENSORPOWER=2,           //Digital Pin that provides power to Conductivity Sensor (CS)
           CSENSORINPUT=0,           //Analog Pin that is used to read in a value from the CS
+          THERMINPUT=1,             //Analog Pin that is used to read in a value from the thermistor (TH)
           TXPIN=1,                  //Digital Pin that is used to transmit data via "Serial"
           FRESHRELAY=4,             //Digital Pin that is used to energize fresh water relay (FWR)
           SALTYRELAY=3,             //Digital Pin that is used to energize salty water relay (SWR)
@@ -15,13 +16,13 @@ const byte                          //These constants are used to make code more
           FRESH=FRESHRELAY;         //Used by addWater() ex: addWater(FRESH,2000);
 
 double                              //These constants represent desired salt levels
-          MASS=87.8,                //Mass of water in tank (g)
-          FLOWRATE=6.67,            //Flow Rate of valves (g/s)
-          SETPOINT=0.001,           //Desired salinity level (Decimal)
-          FRESHGAIN=1.80,           //Gain used when adding fresh water
-          SALTYGAIN=0.15,           //Gain used when adding salty water
+          MASS=0,                   //Mass of water in tank (g)
+          FLOWRATE=0,               //Flow Rate of valves (g/s)
+          SETPOINT=0,               //Desired salinity level (%)
+          FRESHGAIN=0.8,            //Gain used when adding fresh water
+          SALTYGAIN=0.8,            //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
-          STDEV = 4.159590487,      //Standard deviation of salinity data (Should be analogRead() value, not wt%)
+          STDEV=0,                  //Standard deviation of salinity data (Should be analogRead() value, not wt%)
           UCL,                      //Upper acceptable limit of desired salinity level (%)
           LCL;                      //Lower acceptable limit of desired salinity level (%)
 
@@ -42,15 +43,12 @@ double                              /*                                          
 const unsigned long                 //These constants used to define times and intervals
           DST=5000,                 //Represents the time between each display set switch (ms)
           LCD=500,                  //Represents the time between each update of LCD Screen (ms)
-          FRESHDEADTIME=12000,      //Represents the deadtime compensation for fresh water (ms)
-          SALTYDEADTIME=8000;       //Represents the deadtime compensation for salty water (ms)
+          DEADTIME=12000;           //Represents the deadtime compensation for salinity
 
 bool                                //These variables are used to schedule tasks to be run side-by-side
           readCS=false,             //Used when reading conductivity sensor  -> conductivitySchedule
           closeSWS=false,           //Used after opening saltwater solenoid  -> swsSchedule
-          closeFWS=false,           //Used after opening freshwater solenoid -> fwsSchedule
-          tooSalty=false,           //Used when checking salinity            -> adjustSchedule
-          tooFresh=false;           //Used when checking salinity            -> adjustSchedule
+          closeFWS=false;           //Used after opening freshwater solenoid -> fwsSchedule
           
 unsigned long                       //These variables are used to schedule tasks to be run side-by-side
           PRESENT=0,                //This variable represents the current time on the system clock
@@ -59,8 +57,7 @@ unsigned long                       //These variables are used to schedule tasks
           fwsSchedule=0,            //Represents the time scheduled to close freshwater solenoid
           displaySwitchSchedule=DST,//Represents the time scheduled to switch display set
           lcdUpdateSchedule=0,      //Represents the time scheduled to update LCD Screen
-          checkSalinity=10000,      //Represents the time scheduled to check salinity (>DEADTIME<)
-          adjustSchedule=0;         //Represents the time scheduled to adjust salinity
+          adjustSalinity=1000;      //Represents the time scheduled to adjust salinity (DEADTIME)
 
 void setup(){
   Serial.begin(9600);                          // Set baud rate of LCD to 9600 bps
@@ -87,61 +84,47 @@ void loop(){
 }
 
 void events(){                                                  // Usage example: events();
-
-  if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity() is scheduled for now:
-    csOutput = analogRead(CSENSORINPUT);                        //   Read the conductivity sensor
-    digitalWrite(CSENSORPOWER,LOW);                             //   Turn off power to conductivity sensor
-    sStatus = toPercent(csOutput);                              //   Convert output to wtpercent
-    readCS=false;                                               //   Un-Schedule this event
+  if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity() is scheduled for now
+    csOutput = analogRead(CSENSORINPUT);                        // Read the conductivity sensor
+    digitalWrite(CSENSORPOWER,LOW);                             // Turn off power to conductivity sensor
+    readCS=false;                                               // Un-Schedule this event
   }
-  if (closeFWS && PRESENT>fwsSchedule){                         // If closeFreshSolenoid() is scheduled for now:
-    solenoid(CLOSE,FRESH);                                      //   Close the FWS
-    closeFWS=false;                                             //   Un-Schedule this event
+  if (closeFWS && PRESENT>fwsSchedule){                         // If closeFreshSolenoid() is scheduled for now
+    solenoid(CLOSE,FRESH);                                      // Close the FWS
+    closeFWS=false;                                             // Un-Schedule this event
   }
-  if (closeSWS && PRESENT>swsSchedule){                         // If closeSaltySolenoid() is scheduled for now:
-    solenoid(CLOSE,SALTY);                                      //   Close the SWS
-    closeSWS=false;                                             //   Un-Schedule this event
+  if (closeSWS && PRESENT>swsSchedule){                         // If closeSaltySolenoid() is scheduled for now
+    solenoid(CLOSE,SALTY);                                      // Close the SWS
+    closeSWS=false;                                             // Un-Schedule this event
   }
-  if (PRESENT>displaySwitchSchedule){                           // If Switch Display Set is scheduled for now:
-    if (displaySet==1){                                         //   vvvvvvvvvvvvvvvvvvvvvvvv
-      displaySet=2;                                             //   Switch Display Set
-    } else {                                                    //   ^^^^^^^^^^^^^^^^^^^^^^^^
-      displaySet=1;                                             //   ^^^^^^^^^^^^^^^^^^^^^^^^
+  if (PRESENT>displaySwitchSchedule){                           // If Switch Display Set is scheduled for now
+    if (displaySet==1){                                         // vvvvvvvvvvvvvvvvvvvvvvvv
+      displaySet=2;                                             // Switch Display Set
+    } else {                                                    // ^^^^^^^^^^^^^^^^^^^^^^^^
+      displaySet=1;                                             // ^^^^^^^^^^^^^^^^^^^^^^^^
     }                                                           // 
-    displaySwitchSchedule += DST;                               //   Re-schedule event
-    clearLCD();                                                 //   Clear the LCD screen
+    displaySwitchSchedule += DST;                               // Re-schedule event
+    clearLCD();                                                 // Clear the LCD screen
   }
-  if (PRESENT>lcdUpdateSchedule){                               // If updateLCD() is scheduled for now:
-    updateLCD();                                                //   Update the LCD Screen
-    lcdUpdateSchedule += LCD;                                   //   Re-Schedule this event
+  if (PRESENT>lcdUpdateSchedule){                               // If updateLCD() is scheduled for now
+    updateLCD();                                                // Update the LCD Screen
+    lcdUpdateSchedule += LCD;                                   // Re-Schedule this event
   }
-  if (PRESENT>checkSalinity && !tooSalty && !tooFresh){         // If checking salinity is scheduled for now:
-    if (sStatus > UCL){                                         //   If wtpercent NaCl is too high:
-      tooSalty = true;                                          //     Update status
-      adjustSchedule = PRESENT + SALTYDEADTIME;                 //     Wait for readings to even out before adding water
-      checkSalinity += 20000;                                   //     Check every 20 seconds
-    } else if (sStatus < LCL){                                  //   If wtpercent NaCl is too low:
-      tooFresh = true;                                          //     Update status
-      adjustSchedule = PRESENT + FRESHDEADTIME;                 //     Wait for readings to even out before adding water
-      checkSalinity += 20000;                                   //     Check every 20 seconds
-    }                                                           // 
+  if (PRESENT>adjustSalinity){                                  // If adjusting salinity is scheduled for now
+    if (toPercent(csOutput) > UCL){                             // If wtpercent NaCl is too high
+      addWater(FRESH,getFreshOpenTime());                       // Add fresh water
+    } else if (toPercent(csOutput) < LCL){                      // If wtpercent NaCl is too low
+      addWater(SALTY,getSaltyOpenTime());                       // Add salty water
+    }
+    adjustSalinity += DEADTIME;
   }
-  if (PRESENT>adjustSchedule && (tooSalty || tooFresh)){        // If adjusting salinity is scheduled for now:
-    if (tooSalty){                                              //   If water is too salty:
-      addWater(FRESH,getFreshOpenTime());                       //     Fix it
-      tooSalty = false;                                         //     Update status
-    } else if (tooFresh){                                       //   If water is too fresh:
-      addWater(SALTY,getSaltyOpenTime());                       //     Fix it
-      tooFresh = false;                                         //     Update status
-    }                                                           // 
-  }
-}                                                               // End of events()
+}
 
 void readConductivity(){                       // Usage example: int saltLevel = readConductivity();
-  if (!readCS){                                // If this event is not already scheduled:
-    digitalWrite(CSENSORPOWER,HIGH);           //   Turn on power to conductivity sensor
-    readCS = true;                             //   Schedule event to read sensor
-    conductivitySchedule = millis()+100;       //   Schedule event for 100 milliseconds from now
+  if (!readCS){                                // If this event is not already scheduled
+    digitalWrite(CSENSORPOWER,HIGH);           // Turn on power to conductivity sensor
+    readCS = true;                             // Schedule event to read sensor
+    conductivitySchedule = millis()+100;       // Schedule event for 100 milliseconds from now
   }
 }
 
@@ -189,7 +172,7 @@ void outputLCD(int row, int col, String arg){  // Usage example: outputLCD(2,11,
 }
 
 void outputLCD(int row, int col, double arg, int prec){
-//                                             // Usage example: outputLCD(3,2,3.1415,4);
+                                               // Usage example: outputLCD(3,2,3.1415,4);
   int pos = (107 + (20 * row) + col);          // Calculate what number is needed to pass to Serial.write() in order to
   Serial.write(pos);                           // move to the row and column needed
   Serial.print(arg,prec);                      // Serial.print() must be used for variables
@@ -199,36 +182,26 @@ void updateLCD(){
   
   Serial.flush();                             // Wait for LCD to finish printing before beginning
   if (displaySet==1){
-    outputLCD(1,2,"LCL");                     // Print LCL label
-    outputLCD(2,1,LCL*100,3);                 // Print LCL
-    outputLCD(2,6,"%");
+    outputLCD(1,3,"csReading=");              // Print CS reading label
+    outputLCD(1,13,"    ");                   // Clear old CS reading
+    outputLCD(1,13,csOutput);                 // Print CS reading
     
-    outputLCD(1,9,"SP");                      // Print Setpoint reading label
-    outputLCD(2,8,SETPOINT*100,3);            // Print Setpoint
-    outputLCD(2,13,"%");
+    outputLCD(2,4,"Salt =");                  // Print Salinity label
+    outputLCD(2,11,sStatus,4);                // Print Salinity
+    outputLCD(2,17,"%");                      // Print percent sign
     
-    outputLCD(1,16,"UCL");                    // Print UCL label
-    outputLCD(2,15,UCL*100,3);                // Print UCL
-    outputLCD(2,20,"%");
-    
-    outputLCD(4,1,"salty");                   // Print SWS status label
-    if (swsStatus==CLOSED){                   // 
-      outputLCD(3,1,"CLOSED");                // Print SWS status (SWS is CLOSED)
-    } else {                                  // 
-      outputLCD(3,1," OPEN ");                // Print SWS status (SWS is OPEN)
-    }
-    
-    outputLCD(4,7,"current");                 // Print current percentage label
-    outputLCD(3,8,sStatus*100,3);             // Print percentage
-    outputLCD(3,13,"%");
-    
-    outputLCD(4,16,"DI");                     // Print FWS status label
+    outputLCD(3,4,"Fresh=");                  // Print FWS status label
     if (fwsStatus==CLOSED){                   // 
-      outputLCD(3,14,"CLOSED");               // Print FWS status (FWS is CLOSED)
+      outputLCD(3,10,"CLOSED");               // Print FWS status (FWS is CLOSED)
     } else {                                  // 
-      outputLCD(3,14," OPEN ");               // Print FWS status (FWS is OPEN)
+      outputLCD(3,10," OPEN ");               // Print FWS status (FWS is OPEN)
     }
-
+    outputLCD(4,4,"Salty=");                  // Print SWS status label
+    if (swsStatus==CLOSED){                   // 
+      outputLCD(4,10,"CLOSED");               // Print SWS status (SWS is CLOSED)
+    } else {                                  // 
+      outputLCD(4,10," OPEN ");               // Print SWS status (SWS is OPEN)
+    }
   } else {
     outputLCD(1,3,"thReading=");              // Print TH reading label
     outputLCD(1,13,"    ");                   // Clear old TH reading
@@ -246,34 +219,29 @@ void updateLCD(){
   }
 }
 
-double toVolts(int reading){                   // Usage example: double volts = toVolts(readConductivity());
-  return (((double(reading)) / 1023.0) * 5.0); // Derived from ratio: (reading/1023) = (volts/5V)
+double toVolts(int reading){                    // Usage example: double volts = toVolts(readConductivity());
+  return ((( double(reading)) / 1023.0) * 5.0); // Derived from ratio: (reading/1023) = (volts/5V)
 }
 
 void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,SALTYRELAY)
   digitalWrite(relay,action);                  // Set the appropriate pin to the appropriate status
-  if (relay==FRESHRELAY){                      // If operating on the freshwater solenoid:
-    fwsStatus=action;                          //   Update the FWS status variable
-  } else {                                     // If operating on the saltwater solenoid:
-    swsStatus=action;                          //   Update the SWS status variable
+  if (relay==FRESHRELAY){                      // If operating on the freshwater solenoid
+    fwsStatus=action;                          // Update the FWS status variable
+  } else {                                     // 
+    swsStatus=action;                          // Update the SWS status variable
   }                                            // 
 }                                              // 
 
-void addWater(byte type, long ms){             // Usage example: addWater(SALTY,2000)
-  if (sStatus > UCL || sStatus < LCL){         // Only pass if the salinity is not correct
-    if (type==FRESH && !closeFWS){             //   Only pass this if closeFWS is not already scheduled:
-      solenoid(OPEN,FRESHRELAY);               //     Open freshwater solenoid
-      closeFWS=true;                           //     Schedule a task to close freshwater solenoid
-      fwsSchedule = (millis()+ms);             //     Schedule ^ for (ms) milliseconds later
-    }                                          // 
-    if (type==SALTY && !closeSWS){             //   Only pass this if closeSWS is not already scheduled:
-      solenoid(OPEN,SALTYRELAY);               //     Open saltwater solenoid
-      closeSWS=true;                           //     Schedule a task to close saltwater solenoid
-      swsSchedule = (millis()+ms);             //      Schedule ^ for (ms) milliseconds later
-    }                                          // 
-  } else {                                     // If false alarm
-    tooFresh=false;                            //   Reset status
-    tooSalty=false;                            //   Reset status
+void addWater(byte type, unsigned long ms){    // Usage example: addWater(SALTY,2000)
+  if (type==FRESH && !closeFWS){               // Only pass this if closeFWS is not already scheduled
+    solenoid(OPEN,FRESHRELAY);                 // Open freshwater solenoid
+    closeFWS=true;                             // Schedule a task to close freshwater solenoid
+    fwsSchedule = (millis()+ms);               // Schedule ^ for (ms) milliseconds later
+  }                                            // 
+  if (type==SALTY && !closeSWS){               // Only pass this if closeSWS is not already scheduled
+    solenoid(OPEN,SALTYRELAY);                 // Open saltwater solenoid
+    closeSWS=true;                             // Schedule a task to close saltwater solenoid
+    swsSchedule = (millis()+ms);               // Schedule ^ for (ms) milliseconds later
   }                                            // 
 }                                              // 
 
