@@ -2,10 +2,11 @@
 const byte                          //These constants should only be changed if the circuit is changed
           CSENSORPOWER=2,           //Digital Pin that provides power to Conductivity Sensor (CS)
           CSENSORINPUT=0,           //Analog Pin that is used to read in a value from the CS
+          THINPUT=1,                //Analog Pin that is used to read in a value from the TH
           TXPIN=1,                  //Digital Pin that is used to transmit data via "Serial"
           FRESHRELAY=4,             //Digital Pin that is used to energize fresh water relay (FWR)
           SALTYRELAY=3,             //Digital Pin that is used to energize salty water relay (SWR)
-          HEATER=5;                 //Digital Pin that provides power to the heater
+          HEATERRELAY=5;            //Digital Pin that provides power to the heater
            
 const byte                          //These constants are used to make code more readable and should NEVER be changed
           CLOSE=LOW,CLOSED=LOW,     //Used in solenoid() ex: solenoid(CLOSE,FRESHRELAY);
@@ -14,16 +15,24 @@ const byte                          //These constants are used to make code more
           SALTY=SALTYRELAY,         //Used by addWater() ex: addWater(SALTY,2000);
           FRESH=FRESHRELAY;         //Used by addWater() ex: addWater(FRESH,2000);
 
+const int
+          SPECIFIC_HEAT=4180;       //Represents the specific heat of water
+          
+const double
+          HEATER_RESISTANCE=20.5;   //Represents the resistance of the heater
+          
 double                              //These constants represent desired salt levels
           MASS=87.8,                //Mass of water in tank (g)
           FLOWRATE=6.67,            //Flow Rate of valves (g/s)
           SETPOINT=0.001,           //Desired salinity level (Decimal)
           FRESHGAIN=1.80,           //Gain used when adding fresh water
-          SALTYGAIN=0.15,           //Gain used when adding salty water
+          *SALTYGAIN=0.05,           //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
           STDEV = 4.159590487,      //Standard deviation of salinity data (Should be analogRead() value, not wt%)
           UCL,                      //Upper acceptable limit of desired salinity level (%)
-          LCL;                      //Lower acceptable limit of desired salinity level (%)
+          LCL,                      //Lower acceptable limit of desired salinity level (%)
+          TLCL,                     //Lower acceptable limit of desired temperature (Celsius)
+          TUCL;                     //Upper acceptable limit of desired temperature (Celsius)
 
                                     /***********************************************************************/
 byte                                /*These variables are used throughout the program to store data       **/
@@ -42,6 +51,7 @@ double                              /*                                          
 const unsigned long                 //These constants used to define times and intervals
           DST=5000,                 //Represents the time between each display set switch (ms)
           LCD=500,                  //Represents the time between each update of LCD Screen (ms)
+          TEMPCHECK=200,            //Represents the time between each read of the thermistor (ms)
           FRESHDEADTIME=12000,      //Represents the deadtime compensation for fresh water (ms)
           SALTYDEADTIME=8000;       //Represents the deadtime compensation for salty water (ms)
 
@@ -49,17 +59,21 @@ bool                                //These variables are used to schedule tasks
           readCS=false,             //Used when reading conductivity sensor  -> conductivitySchedule
           closeSWS=false,           //Used after opening saltwater solenoid  -> swsSchedule
           closeFWS=false,           //Used after opening freshwater solenoid -> fwsSchedule
+          turnOffHeater=false,      //Used after turning on heater           -> heatSchedule
           tooSalty=false,           //Used when checking salinity            -> adjustSchedule
           tooFresh=false;           //Used when checking salinity            -> adjustSchedule
           
 unsigned long                       //These variables are used to schedule tasks to be run side-by-side
           PRESENT=0,                //This variable represents the current time on the system clock
           conductivitySchedule=100, //Represents the time scheduled to read the CS
+          thermistorSchedule=200,   //Represents the time scheduled to read the TH
           swsSchedule=0,            //Represents the time scheduled to close saltwater solenoid
           fwsSchedule=0,            //Represents the time scheduled to close freshwater solenoid
+          heatSchedule=0,           //Represents the time scheduled to turn off heater
           displaySwitchSchedule=DST,//Represents the time scheduled to switch display set
           lcdUpdateSchedule=0,      //Represents the time scheduled to update LCD Screen
           checkSalinity=10000,      //Represents the time scheduled to check salinity (>DEADTIME<)
+          adjustTemp=0,             //Represents the time scheduled to adjust temperature
           adjustSchedule=0;         //Represents the time scheduled to adjust salinity
 
 void setup(){
@@ -68,7 +82,7 @@ void setup(){
   pinMode(CSENSORPOWER,OUTPUT);                // Set pin that powers conductivity sensor to output mode
   pinMode(FRESHRELAY,OUTPUT);                  // Set pin used to energize FWR to output mode
   pinMode(SALTYRELAY,OUTPUT);                  // Set pin used to energize SWR to output mode
-  pinMode(HEATER,OUTPUT);                      // Set pin used to power heater to output mode
+  pinMode(HEATERRELAY,OUTPUT);                 // Set pin used to power heater to output mode
   formatLCD(true,false,false);                 // Turn display on, cursor off, character blink off
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
@@ -94,6 +108,11 @@ void events(){                                                  // Usage example
     sStatus = toPercent(csOutput);                              //   Convert output to wtpercent
     readCS=false;                                               //   Un-Schedule this event
   }
+  if (thermistorSchedule < PRESENT){                            // If readThermistor() is scheduled for now:
+    thOutput = analogRead(THINPUT);                             //   Read the thermistor
+    tStatus = toTemp(thOutput);                                 //   Convert output to degrees Celsius
+    thermistorSchedule = PRESENT + TEMPCHECK;                   //   Re-Schedule this event
+  }
   if (closeFWS && PRESENT>fwsSchedule){                         // If closeFreshSolenoid() is scheduled for now:
     solenoid(CLOSE,FRESH);                                      //   Close the FWS
     closeFWS=false;                                             //   Un-Schedule this event
@@ -101,16 +120,7 @@ void events(){                                                  // Usage example
   if (closeSWS && PRESENT>swsSchedule){                         // If closeSaltySolenoid() is scheduled for now:
     solenoid(CLOSE,SALTY);                                      //   Close the SWS
     closeSWS=false;                                             //   Un-Schedule this event
-  }/*
-  if (PRESENT>displaySwitchSchedule){                           // If Switch Display Set is scheduled for now:
-    if (displaySet==1){                                         //   vvvvvvvvvvvvvvvvvvvvvvvv
-      displaySet=2;                                             //   Switch Display Set
-    } else {                                                    //   ^^^^^^^^^^^^^^^^^^^^^^^^
-      displaySet=1;                                             //   ^^^^^^^^^^^^^^^^^^^^^^^^
-    }                                                           // 
-    displaySwitchSchedule += DST;                               //   Re-schedule event
-    clearLCD();                                                 //   Clear the LCD screen
-  }*/
+  }
   if (PRESENT>lcdUpdateSchedule){                               // If updateLCD() is scheduled for now:
     updateLCD();                                                //   Update the LCD Screen
     lcdUpdateSchedule += LCD;                                   //   Re-Schedule this event
@@ -134,6 +144,15 @@ void events(){                                                  // Usage example
       addWater(SALTY,getSaltyOpenTime());                       //     Fix it
       tooFresh = false;                                         //     Update status
     }                                                           // 
+  }
+  if (adjustTemp < PRESENT){
+    if (tStatus < TLCL){
+      heatUp(getHeaterUpTime());
+    }
+    adjustTemp = PRESENT + 100;
+  }
+  if (turnOffHeater && heatSchedule < PRESENT){
+    digitalWrite(HEATERRELAY,LOW);
   }
 }                                                               // End of events()
 
@@ -277,12 +296,23 @@ void addWater(byte type, long ms){             // Usage example: addWater(SALTY,
   }                                            // 
 }                                              // 
 
+void heatUp(unsigned long time){
+  digitalWrite(HEATERRELAY, HIGH);
+  turnOffHeater = true;
+  heatSchedule = PRESENT + time;
+}
+
 double toPercent(int reading){                 // Usage example: double wtpercent = toPercent(csOutput);
   return pow(2.71828182846,((double(reading)-1598.93492766)/146.5571565956));    // Derived from conductivity 
 //                                                                               // calibration spreadsheet
 }
 int toReading(double percent){                 // Usage example: int reading = toReading(wtpercent);
   return int(146.5571565956 * log(percent) + 1598.93492766);                     // Taken from conductivity
+//                                                                               // calibration spreadsheet
+}
+
+double toTemp(int reading){
+  return pow(2.71828182846,((double(reading)+272.7245412132)/243.2281096415));   // Derived from thermistor reading
 //                                                                               // calibration spreadsheet
 }
 
@@ -293,4 +323,10 @@ long getFreshOpenTime(){                       // Usage example: addWater(FRESH,
 long getSaltyOpenTime(){                       // Usage example: addWater(SALTY,getSaltyOpenTime());
   double SALINITY = toPercent(csOutput);
   return abs(long(double(1000.0) * (MASS * SALTYGAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+}
+long getHeaterUpTime(){                        // Usage example: heatUp(getHeaterUpTime());
+  if (tStatus > TLCL){
+    return 0L;
+  }
+  return abs((MASS * SPECIFIC_HEAT * (TLCL - tStatus)) / (144 / HEATER_RESISTANCE));
 }
