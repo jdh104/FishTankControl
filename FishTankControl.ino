@@ -2,7 +2,6 @@
 const byte                          //These constants should only be changed if the circuit is changed
           CSENSORPOWER=2,           //Digital Pin that provides power to Conductivity Sensor (CS)
           CSENSORINPUT=0,           //Analog Pin that is used to read in a value from the CS
-          THERMINPUT=1,             //Analog Pin that is used to read in a value from the thermistor (TH)
           TXPIN=1,                  //Digital Pin that is used to transmit data via "Serial"
           FRESHRELAY=4,             //Digital Pin that is used to energize fresh water relay (FWR)
           SALTYRELAY=3,             //Digital Pin that is used to energize salty water relay (SWR)
@@ -43,12 +42,15 @@ double                              /*                                          
 const unsigned long                 //These constants used to define times and intervals
           DST=5000,                 //Represents the time between each display set switch (ms)
           LCD=500,                  //Represents the time between each update of LCD Screen (ms)
-          DEADTIME=12000;           //Represents the deadtime compensation for salinity
+          FRESHDEADTIME=12000,      //Represents the deadtime compensation for fresh water (ms)
+          SALTYDEADTIME=8000;       //Represents the deadtime compensation for salty water (ms)
 
 bool                                //These variables are used to schedule tasks to be run side-by-side
           readCS=false,             //Used when reading conductivity sensor  -> conductivitySchedule
           closeSWS=false,           //Used after opening saltwater solenoid  -> swsSchedule
-          closeFWS=false;           //Used after opening freshwater solenoid -> fwsSchedule
+          closeFWS=false,           //Used after opening freshwater solenoid -> fwsSchedule
+          tooSalty=false,           //Used when checking salinity            -> adjustSchedule
+          tooFresh=false;           //Used when checking salinity            -> adjustSchedule
           
 unsigned long                       //These variables are used to schedule tasks to be run side-by-side
           PRESENT=0,                //This variable represents the current time on the system clock
@@ -57,7 +59,8 @@ unsigned long                       //These variables are used to schedule tasks
           fwsSchedule=0,            //Represents the time scheduled to close freshwater solenoid
           displaySwitchSchedule=DST,//Represents the time scheduled to switch display set
           lcdUpdateSchedule=0,      //Represents the time scheduled to update LCD Screen
-          adjustSalinity=1000;      //Represents the time scheduled to adjust salinity (DEADTIME)
+          checkSalinity=10000,      //Represents the time scheduled to check salinity (>DEADTIME<)
+          adjustSchedule=0;         //Represents the time scheduled to adjust salinity
 
 void setup(){
   Serial.begin(9600);                          // Set baud rate of LCD to 9600 bps
