@@ -24,13 +24,15 @@ const double
 double                              //These constants represent desired salt levels
           MASS=87.8,                //Mass of water in tank (g)
           FLOWRATE=6.67,            //Flow Rate of valves (g/s)
-          SETPOINT=0.001,           //Desired salinity level (Decimal)
+          SSETPOINT=0.001,          //Desired salinity level (Decimal)
+          TSETPOINT=?,              //Desired temperature (Degrees Celsius)
           FRESHGAIN=2.50,           //Gain used when adding fresh water
           SALTYGAIN=0.05,           //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
-          STDEV = 4.159590487,      //Standard deviation of salinity data (Should be analogRead() value, not wt%)
-          UCL,                      //Upper acceptable limit of desired salinity level (%)
-          LCL,                      //Lower acceptable limit of desired salinity level (%)
+          CSSTDEV = 4.159590487,    //Standard deviation of salinity data (Should be analogRead() value)
+          THSTDEV = 0.48,           //Standard deviation of thermistor data (Should be analogRead() value)
+          SUCL,                     //Upper acceptable limit of desired salinity level (%)
+          SLCL,                     //Lower acceptable limit of desired salinity level (%)
           TLCL,                     //Lower acceptable limit of desired temperature (Celsius)
           TUCL;                     //Upper acceptable limit of desired temperature (Celsius)
 
@@ -88,9 +90,11 @@ void setup(){
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
   
-  LCL=toPercent(toReading(SETPOINT)-(3*STDEV));    // Calculate Lower Control Limit
-  UCL=toPercent(toReading(SETPOINT)+(3*STDEV));    // Calculate Upper Control Limit
+  SLCL=toPercent(percentToReading(SSETPOINT)-(3*CSSTDEV));    // Calculate Lower Control Limit
+  SUCL=toPercent(percentToReading(SSETPOINT)+(3*CSSTDEV));    // Calculate Upper Control Limit
   
+  TLCL=toTemp(tempToReading(TSETPOINT)-(3*THSTDEV));          // Calculate Lower Control Limit
+  TUCL=toTemp(tempToReading(TSETPOINT)+(3*THSTDEV));          // Calculate Upper Control Limit
 }
 
 void loop(){
@@ -149,14 +153,15 @@ void events(){                                                  // Usage example
       tooFresh = false;                                         //     Update status
     }                                                           // 
   }
-  if (adjustTemp < PRESENT){
-    if (tStatus < TLCL){
-      heatUp(getHeaterUpTime());
-    }
-    adjustTemp = PRESENT + 100;
+  if (adjustTemp < PRESENT){                                    // If time to check temperature:
+    if (tStatus < TLCL){                                        //   If water is too cold:
+      heatUp(getHeaterUpTime());                                //     Fix it
+    }                                                           // 
+    adjustTemp = PRESENT + 100;                                 // Re-schedule this event
   }
-  if (turnOffHeater && heatSchedule < PRESENT){
-    digitalWrite(HEATERRELAY,LOW);
+  if (turnOffHeater && heatSchedule < PRESENT){                 // If time to turn off heater:
+    digitalWrite(HEATERRELAY,LOW);                              //   Do it
+    turnOffHeater = false;                                      //   Un-schedule this event
   }
 }                                                               // End of events()
 
@@ -310,16 +315,18 @@ double toPercent(int reading){                 // Usage example: double wtpercen
   return pow(2.71828182846,((double(reading)-1598.93492766)/146.5571565956));    // Derived from conductivity 
 //                                                                               // calibration spreadsheet
 }
-int toReading(double percent){                 // Usage example: int reading = toReading(wtpercent);
+int percentToReading(double percent){          // Usage example: int reading = percentToReading(wtpercent);
   return int(146.5571565956 * log(percent) + 1598.93492766);                     // Taken from conductivity
 //                                                                               // calibration spreadsheet
 }
-
 double toTemp(int reading){
-  return pow(2.71828182846,((double(reading)+272.7245412132)/243.2281096415));   // Derived from thermistor reading
+  return pow(2.71828182846,((double(reading)+272.7245412132)/243.2281096415));   // Derived from thermistor
 //                                                                               // calibration spreadsheet
 }
-
+int tempToReding(double temp){
+  return int(243.2281096415 * log(temp) - 272.7245412132);                       // Taken from thermistor
+//                                                                               // calibration spreadsheet
+}
 long getFreshOpenTime(){                       // Usage example: addWater(FRESH,getFreshOpenTime());
   double SALINITY = toPercent(csOutput);
   return abs(long(double(1000.0) * (MASS * FRESHGAIN * abs(SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
