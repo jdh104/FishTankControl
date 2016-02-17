@@ -25,7 +25,7 @@ double                              //These constants represent desired salt lev
           MASS=87.8,                //Mass of water in tank (g)
           FLOWRATE=6.67,            //Flow Rate of valves (g/s)
           SSETPOINT=0.001,          //Desired salinity level (Decimal)
-          TSETPOINT=?,              //Desired temperature (Degrees Celsius)
+          TSETPOINT=25,             //Desired temperature (Degrees Celsius)
           FRESHGAIN=2.50,           //Gain used when adding fresh water
           SALTYGAIN=0.05,           //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
@@ -46,8 +46,8 @@ int                                 /*                                          
           thOutput=0,               /*Output of Thermister                                                **/
           displaySet=1;             /*Symbolizes which set of data to print to LCD screen                 **/
 double                              /*                                                                    **/
-          sStatus,                  /*Status of Salinity of water (wt%)                                   **/
-          tStatus;                  /*Status of Temperature of water (Degrees)                            **/
+          sStatus=SSETPOINT,        /*Status of Salinity of water (wt%)                                   **/
+          tStatus=TSETPOINT;        /*Status of Temperature of water (Degrees)                            **/
                                     /***********************************************************************/
 
 const unsigned long                 //These constants used to define times and intervals
@@ -106,7 +106,7 @@ void loop(){
 
 void events(){                                                  // Usage example: events();
 
-  if (PRESENT>readCSSchedule){                                  // If time to read conductivity
+  if (PRESENT>readCSSchedule){                                  // If time to read conductivity:
     readConductivity();                                         //   Activate reading event
     readCSSchedule += 250;                                      //   Re-schedule this event
   }
@@ -134,11 +134,11 @@ void events(){                                                  // Usage example
     lcdUpdateSchedule += LCD;                                   //   Re-Schedule this event
   }
   if (PRESENT>checkSalinity && !tooSalty && !tooFresh){         // If checking salinity is scheduled for now:
-    if (sStatus > UCL){                                         //   If wtpercent NaCl is too high:
+    if (sStatus > SUCL){                                        //   If wtpercent NaCl is too high:
       tooSalty = true;                                          //     Update status
       adjustSchedule = PRESENT + SALTYDEADTIME;                 //     Wait for readings to even out before adding water
       checkSalinity += SALTYDEADTIME;                           //     Check again after hysteresis
-    } else if (sStatus < LCL){                                  //   If wtpercent NaCl is too low:
+    } else if (sStatus < SLCL){                                 //   If wtpercent NaCl is too low:
       tooFresh = true;                                          //     Update status
       adjustSchedule = PRESENT + FRESHDEADTIME;                 //     Wait for readings to even out before adding water
       checkSalinity += FRESHDEADTIME;                           //     Check again after hysteresis
@@ -224,7 +224,7 @@ void outputLCD(int row, int col, double arg, int prec){
 }
 
 void updateLCD(){
-  
+
   Serial.flush();                             // Wait for LCD to finish printing before beginning
   if (displaySet==1){
     outputLCD(1,2,"LCL");                     // Print LCL label
@@ -288,7 +288,7 @@ void solenoid(byte action, byte relay){        // Usage example: solenoid(OPEN,S
 }                                              // 
 
 void addWater(byte type, long ms){             // Usage example: addWater(SALTY,2000)
-  if (sStatus > UCL || sStatus < LCL){         // Only pass if the salinity is not correct
+  if (sStatus > SUCL || sStatus < SLCL){       // Only pass if the salinity is not correct
     if (type==FRESH && !closeFWS){             //   Only pass this if closeFWS is not already scheduled:
       solenoid(OPEN,FRESHRELAY);               //     Open freshwater solenoid
       closeFWS=true;                           //     Schedule a task to close freshwater solenoid
@@ -323,17 +323,17 @@ double toTemp(int reading){
   return pow(2.71828182846,((double(reading)+272.7245412132)/243.2281096415));   // Derived from thermistor
 //                                                                               // calibration spreadsheet
 }
-int tempToReding(double temp){
+int tempToReading(double temp){
   return int(243.2281096415 * log(temp) - 272.7245412132);                       // Taken from thermistor
 //                                                                               // calibration spreadsheet
 }
 long getFreshOpenTime(){                       // Usage example: addWater(FRESH,getFreshOpenTime());
   double SALINITY = toPercent(csOutput);
-  return abs(long(double(1000.0) * (MASS * FRESHGAIN * abs(SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+  return abs(long(double(1000.0) * (MASS * FRESHGAIN * abs(SALINITY - SSETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
 }
 long getSaltyOpenTime(){                       // Usage example: addWater(SALTY,getSaltyOpenTime());
   double SALINITY = toPercent(csOutput);
-  return abs(long(double(1000.0) * (MASS * SALTYGAIN * abs(SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+  return abs(long(double(1000.0) * (MASS * SALTYGAIN * abs(SALINITY - SSETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
 }
 long getHeaterUpTime(){                        // Usage example: heatUp(getHeaterUpTime());
   if (tStatus > TLCL){
