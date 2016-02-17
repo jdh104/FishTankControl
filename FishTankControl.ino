@@ -25,7 +25,7 @@ double                              //These constants represent desired salt lev
           MASS=87.8,                //Mass of water in tank (g)
           FLOWRATE=6.67,            //Flow Rate of valves (g/s)
           SSETPOINT=0.001,          //Desired salinity level (Decimal)
-          TSETPOINT=25,             //Desired temperature (Degrees Celsius)
+          TSETPOINT=25.0,           //Desired temperature (Degrees Celsius)
           FRESHGAIN=2.50,           //Gain used when adding fresh water
           SALTYGAIN=0.05,           //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
