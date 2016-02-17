@@ -90,11 +90,11 @@ void setup(){
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
   
-  SLCL=toPercent(percentToReading(SSETPOINT)-ceil(3*CSSTDEV));    // Calculate Lower Control Limit
-  SUCL=toPercent(percentToReading(SSETPOINT)+ceil(3*CSSTDEV));    // Calculate Upper Control Limit
+  SLCL=toPercent(floor(percentToReading(SSETPOINT)-(3*CSSTDEV)));   // Calculate Lower Control Limit
+  SUCL=toPercent(ceil(percentToReading(SSETPOINT)+(3*CSSTDEV)));    // Calculate Upper Control Limit
   
-  TLCL=toTemp(tempToReading(TSETPOINT)-ceil(3*THSTDEV));          // Calculate Lower Control Limit
-  TUCL=toTemp(tempToReading(TSETPOINT)+ceil(3*THSTDEV));          // Calculate Upper Control Limit
+  TLCL=toTemp(floor(tempToReading(TSETPOINT)-(3*THSTDEV)));         // Calculate Lower Control Limit
+  TUCL=toTemp(ceil(tempToReading(TSETPOINT)+(3*THSTDEV)));          // Calculate Upper Control Limit
 }
 
 void loop(){
