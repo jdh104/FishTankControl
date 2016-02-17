@@ -25,8 +25,8 @@ double                              //These constants represent desired salt lev
           MASS=87.8,                //Mass of water in tank (g)
           FLOWRATE=6.67,            //Flow Rate of valves (g/s)
           SETPOINT=0.001,           //Desired salinity level (Decimal)
-          FRESHGAIN=1.80,           //Gain used when adding fresh water
-          *SALTYGAIN=0.05,           //Gain used when adding salty water
+          FRESHGAIN=2.50,           //Gain used when adding fresh water
+          SALTYGAIN=0.05,           //Gain used when adding salty water
           OVF=0.15,                 //Overflow fraction that is striaght from input
           STDEV = 4.159590487,      //Standard deviation of salinity data (Should be analogRead() value, not wt%)
           UCL,                      //Upper acceptable limit of desired salinity level (%)
@@ -66,13 +66,14 @@ bool                                //These variables are used to schedule tasks
 unsigned long                       //These variables are used to schedule tasks to be run side-by-side
           PRESENT=0,                //This variable represents the current time on the system clock
           conductivitySchedule=100, //Represents the time scheduled to read the CS
+          readCSSchedule=0,         //Represents the time scheduled to initialize readConductivity()
           thermistorSchedule=200,   //Represents the time scheduled to read the TH
           swsSchedule=0,            //Represents the time scheduled to close saltwater solenoid
           fwsSchedule=0,            //Represents the time scheduled to close freshwater solenoid
           heatSchedule=0,           //Represents the time scheduled to turn off heater
           displaySwitchSchedule=DST,//Represents the time scheduled to switch display set
           lcdUpdateSchedule=0,      //Represents the time scheduled to update LCD Screen
-          checkSalinity=10000,      //Represents the time scheduled to check salinity (>DEADTIME<)
+          checkSalinity=2000,       //Represents the time scheduled to check salinity (>DEADTIME<)
           adjustTemp=0,             //Represents the time scheduled to adjust temperature
           adjustSchedule=0;         //Represents the time scheduled to adjust salinity
 
@@ -96,12 +97,15 @@ void loop(){
   
   PRESENT = millis();                                           // Update current time
   events();                                                     // Do scheduled events
-  readConductivity();                                           // Read conductivity sensor
   
 }
 
 void events(){                                                  // Usage example: events();
 
+  if (PRESENT>readCSSchedule){                                  // If time to read conductivity
+    readConductivity();                                         //   Activate reading event
+    readCSSchedule += 250;                                      //   Re-schedule this event
+  }
   if (readCS && PRESENT>conductivitySchedule){                  // If readConductivity() is scheduled for now:
     csOutput = analogRead(CSENSORINPUT);                        //   Read the conductivity sensor
     digitalWrite(CSENSORPOWER,LOW);                             //   Turn off power to conductivity sensor
@@ -129,11 +133,11 @@ void events(){                                                  // Usage example
     if (sStatus > UCL){                                         //   If wtpercent NaCl is too high:
       tooSalty = true;                                          //     Update status
       adjustSchedule = PRESENT + SALTYDEADTIME;                 //     Wait for readings to even out before adding water
-      checkSalinity += 20000;                                   //     Check every 20 seconds
+      checkSalinity += SALTYDEADTIME;                           //     Check again after hysteresis
     } else if (sStatus < LCL){                                  //   If wtpercent NaCl is too low:
       tooFresh = true;                                          //     Update status
       adjustSchedule = PRESENT + FRESHDEADTIME;                 //     Wait for readings to even out before adding water
-      checkSalinity += 20000;                                   //     Check every 20 seconds
+      checkSalinity += FRESHDEADTIME;                           //     Check again after hysteresis
     }                                                           // 
   }
   if (PRESENT>adjustSchedule && (tooSalty || tooFresh)){        // If adjusting salinity is scheduled for now:
@@ -318,11 +322,11 @@ double toTemp(int reading){
 
 long getFreshOpenTime(){                       // Usage example: addWater(FRESH,getFreshOpenTime());
   double SALINITY = toPercent(csOutput);
-  return abs(long(double(1000.0) * (MASS * FRESHGAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+  return abs(long(double(1000.0) * (MASS * FRESHGAIN * abs(SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
 }
 long getSaltyOpenTime(){                       // Usage example: addWater(SALTY,getSaltyOpenTime());
   double SALINITY = toPercent(csOutput);
-  return abs(long(double(1000.0) * (MASS * SALTYGAIN * (SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
+  return abs(long(double(1000.0) * (MASS * SALTYGAIN * abs(SALINITY - SETPOINT)) / (FLOWRATE * SALINITY * (1.0 - OVF))));
 }
 long getHeaterUpTime(){                        // Usage example: heatUp(getHeaterUpTime());
   if (tStatus > TLCL){
