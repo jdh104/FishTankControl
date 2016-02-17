@@ -222,34 +222,39 @@ void updateLCD(){
   
   Serial.flush();                             // Wait for LCD to finish printing before beginning
   if (displaySet==1){
-    outputLCD(1,2,"LCL");                     // Print LCL label
-    outputLCD(2,1,LCL*100,3);                 // Print LCL
-    outputLCD(2,6,"%");
+    outputLCD(1,5,"LCL");                      // Print LCL label
+    outputLCD(2,4,SLCL*100,3);                 // Print LCL
     
-    outputLCD(1,9,"SP");                      // Print Setpoint reading label
-    outputLCD(2,8,SETPOINT*100,3);            // Print Setpoint
-    outputLCD(2,13,"%");
+    outputLCD(1,12,"SP");                      // Print Setpoint reading label
+    outputLCD(2,10,SSETPOINT*100,3);            // Print Setpoint
     
-    outputLCD(1,16,"UCL");                    // Print UCL label
-    outputLCD(2,15,UCL*100,3);                // Print UCL
-    outputLCD(2,20,"%");
+    outputLCD(1,17,"UCL");                    // Print UCL label
+    outputLCD(2,16,SUCL*100,3);               // Print UCL
     
-    outputLCD(4,1,"salty");                   // Print SWS status label
-    if (swsStatus==CLOSED){                   // 
-      outputLCD(3,1,"CLOSED");                // Print SWS status (SWS is CLOSED)
+    outputLCD(2,1,"S:");                      //Print "S:" to indicate that row's values are in reference to the salinity
+    
+    outputLCD(3,1,"T:");                      //Print "T:" to indicate that row's values are in reference to the temperature
+    
+    outputLCD(3,17,TUCL*100,3);                //Print the temperature's UCL
+    
+    outputLCD(3,11,TSETPOINT*100,3);          //Print the temperature's SP
+    
+    outputLCD(3,5,TLCL);                      //Print the temperature's LCL
+    
+    outputLCD(4,1,"S=");                      //Print "S=" to indicate current salinity
+    
+    outputLCD(4,3,sStatus*100,3);             //Print current salinity
+    
+    outputLCD(4,9,"T=");                      //Print "T=" to indicate the current temp
+    
+    outputLCD(4,11,tStatus);                  //Print current temp
+    
+    outputLCD(4,16,"H=");                     //Print "H=" to indicate current heater status
+    
+    if (htrStatus==OFF){                      // 
+      outputLCD(4,18,"off");                  // Print Heater status (Heater is OFF)
     } else {                                  // 
-      outputLCD(3,1," OPEN ");                // Print SWS status (SWS is OPEN)
-    }
-    
-    outputLCD(4,7,"current");                 // Print current percentage label
-    outputLCD(3,8,sStatus*100,3);             // Print percentage
-    outputLCD(3,13,"%");
-    
-    outputLCD(4,16,"DI");                     // Print FWS status label
-    if (fwsStatus==CLOSED){                   // 
-      outputLCD(3,14,"CLOSED");               // Print FWS status (FWS is CLOSED)
-    } else {                                  // 
-      outputLCD(3,14," OPEN ");               // Print FWS status (FWS is OPEN)
+      outputLCD(4,18,"on ");                  // Print Heater status (Heater is ON)
     }
 
   } else {
