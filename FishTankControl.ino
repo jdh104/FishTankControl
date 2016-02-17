@@ -90,11 +90,11 @@ void setup(){
   clearLCD();                                  // Clear the LCD's screen
   backLightLCD(true);                          // Turn the LCD backlight on
   
-  SLCL=toPercent(percentToReading(SSETPOINT)-(3*CSSTDEV));    // Calculate Lower Control Limit
-  SUCL=toPercent(percentToReading(SSETPOINT)+(3*CSSTDEV));    // Calculate Upper Control Limit
+  SLCL=toPercent(percentToReading(SSETPOINT)-ceil(3*CSSTDEV));    // Calculate Lower Control Limit
+  SUCL=toPercent(percentToReading(SSETPOINT)+ceil(3*CSSTDEV));    // Calculate Upper Control Limit
   
-  TLCL=toTemp(tempToReading(TSETPOINT)-(3*THSTDEV));          // Calculate Lower Control Limit
-  TUCL=toTemp(tempToReading(TSETPOINT)+(3*THSTDEV));          // Calculate Upper Control Limit
+  TLCL=toTemp(tempToReading(TSETPOINT)-ceil(3*THSTDEV));          // Calculate Lower Control Limit
+  TUCL=toTemp(tempToReading(TSETPOINT)+ceil(3*THSTDEV));          // Calculate Upper Control Limit
 }
 
 void loop(){
@@ -308,11 +308,11 @@ int percentToReading(double percent){          // Usage example: int reading = p
 //                                                                               // calibration spreadsheet
 }
 double toTemp(int reading){
-  return pow(2.71828182846,((double(reading)+272.7245412132)/243.2281096415));   // Derived from thermistor
+  return double((reading - 228.5374532946) / 10.9605005634);                     // Derived from thermistor
 //                                                                               // calibration spreadsheet
 }
 int tempToReading(double temp){
-  return int(243.2281096415 * log(temp) - 272.7245412132);                       // Taken from thermistor
+  return int(10.9605005634 * temp + 228.5374532946);                             // Taken from thermistor
 //                                                                               // calibration spreadsheet
 }
 long getFreshOpenTime(){                       // Usage example: addWater(FRESH,getFreshOpenTime());
