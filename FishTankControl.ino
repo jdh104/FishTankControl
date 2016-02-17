@@ -224,54 +224,7 @@ void outputLCD(int row, int col, double arg, int prec){
 }
 
 void updateLCD(){
-
-  Serial.flush();                             // Wait for LCD to finish printing before beginning
-  if (displaySet==1){
-    outputLCD(1,2,"LCL");                     // Print LCL label
-    outputLCD(2,1,LCL*100,3);                 // Print LCL
-    outputLCD(2,6,"%");
-    
-    outputLCD(1,9,"SP");                      // Print Setpoint reading label
-    outputLCD(2,8,SETPOINT*100,3);            // Print Setpoint
-    outputLCD(2,13,"%");
-    
-    outputLCD(1,16,"UCL");                    // Print UCL label
-    outputLCD(2,15,UCL*100,3);                // Print UCL
-    outputLCD(2,20,"%");
-    
-    outputLCD(4,1,"salty");                   // Print SWS status label
-    if (swsStatus==CLOSED){                   // 
-      outputLCD(3,1,"CLOSED");                // Print SWS status (SWS is CLOSED)
-    } else {                                  // 
-      outputLCD(3,1," OPEN ");                // Print SWS status (SWS is OPEN)
-    }
-    
-    outputLCD(4,7,"current");                 // Print current percentage label
-    outputLCD(3,8,sStatus*100,3);             // Print percentage
-    outputLCD(3,13,"%");
-    
-    outputLCD(4,16,"DI");                     // Print FWS status label
-    if (fwsStatus==CLOSED){                   // 
-      outputLCD(3,14,"CLOSED");               // Print FWS status (FWS is CLOSED)
-    } else {                                  // 
-      outputLCD(3,14," OPEN ");               // Print FWS status (FWS is OPEN)
-    }
-
-  } else {
-    outputLCD(1,3,"thReading=");              // Print TH reading label
-    outputLCD(1,13,"    ");                   // Clear old TH reading
-    outputLCD(1,13,thOutput);                 // Print TH reading
-    
-    outputLCD(2,5,"Temp=");                   // Print Temperature label
-    outputLCD(2,10,tStatus,4);                // Print Temperature
-    
-    outputLCD(4,4,"Heater is");               // Print Heater status label
-    if (htrStatus==OFF){                      // 
-      outputLCD(4,14,"OFF");                  // Print Heater status (Heater is OFF)
-    } else {                                  // 
-      outputLCD(4,14,"ON ");                  // Print Heater status (Heater is ON)
-    }
-  }
+  //Kerri will write this
 }
 
 double toVolts(int reading){                   // Usage example: double volts = toVolts(readConductivity());
