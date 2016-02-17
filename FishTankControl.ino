@@ -161,6 +161,7 @@ void events(){                                                  // Usage example
   }
   if (turnOffHeater && heatSchedule < PRESENT){                 // If time to turn off heater:
     digitalWrite(HEATERRELAY,LOW);                              //   Do it
+    htrStatus = OFF;
     turnOffHeater = false;                                      //   Un-schedule this event
   }
 }                                                               // End of events()
@@ -237,11 +238,11 @@ void updateLCD(){
     
     outputLCD(3,1,"T:");                      //Print "T:" to indicate that row's values are in reference to the temperature
     
-    outputLCD(3,17,TUCL*100,3);                //Print the temperature's UCL
+    outputLCD(3,16,TUCL,2);                //Print the temperature's UCL
     
-    outputLCD(3,11,TSETPOINT*100,3);          //Print the temperature's SP
+    outputLCD(3,10,TSETPOINT,2);          //Print the temperature's SP
     
-    outputLCD(3,5,TLCL);                      //Print the temperature's LCL
+    outputLCD(3,4,TLCL,2);                      //Print the temperature's LCL
     
     outputLCD(4,1,"S=");                      //Print "S=" to indicate current salinity
     
@@ -249,7 +250,7 @@ void updateLCD(){
     
     outputLCD(4,9,"T=");                      //Print "T=" to indicate the current temp
     
-    outputLCD(4,11,tStatus);                  //Print current temp
+    outputLCD(4,11,tStatus,1);                  //Print current temp
     
     outputLCD(4,16,"H=");                     //Print "H=" to indicate current heater status
     
@@ -293,6 +294,7 @@ void addWater(byte type, long ms){             // Usage example: addWater(SALTY,
 
 void heatUp(unsigned long time){
   digitalWrite(HEATERRELAY, HIGH);
+  htrStatus = ON;
   turnOffHeater = true;
   heatSchedule = PRESENT + time;
 }
